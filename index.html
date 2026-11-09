@@ -3,109 +3,32 @@
 
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="author"
-    content="Weather Forecast Application | Weather in my City | CloudCompass | SkyCast | Forecastly" />
   <meta name="description"
-    content="Stay updated with accurate and real-time weather forecasts. Get insights into temperature, humidity, wind speed, and more with [Your App Name]." />
-  <meta name="keywords"
-    content="weather app, weather forecast, real-time weather, temperature updates, humidity tracker, weather tracker, Weather Forecast Application" />
-  <title>
-    Weather Forecast Application | Weather in my City | CloudCompass | SkyCast
-    | Forecastly
-  </title>
-  <link rel="stylesheet" href="./src/styles/style.css" />
-  <link rel="stylesheet" href="./src/styles/custom.css">
+    content="CloudCompass - Accurate real-time weather forecasts and live air quality (AQI) monitoring with CPCB scale, PM2.5, PM10, 24-hour trends and neighborhood sensors." />
+  <title>CloudCompass | Weather & Real-Time Air Quality Monitor</title>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem("cloudcompass_theme");
+        var theme = stored ? JSON.parse(stored) : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        if (theme === "dark") {
+          document.documentElement.className = "dark";
+        } else {
+          document.documentElement.className = "light";
+        }
+      } catch (e) {
+        document.documentElement.className = "light";
+      }
+    })();
+  </script>
 </head>
 
-<!-- ///////////////////////////////////////////////// Body Section ///////////////////////////////////////////////////////////// -->
-
-<body class="custom bg-gradient-to-br from-blue-100 to-teal-100 m-2 font-sans">
-
-  <!-- //////////////////////////////////////////////// Header Section /////////////////////////////////////////////////////////// -->
-  <header class="bg-gradient-to-r from-teal-300 to-blue-500 text-white p-6 shadow-xl rounded-xl max-w-4xl mx-auto">
-    <div class="text-center mb-2">
-      <h1 class="text-3xl tracking-widest">CloudCompass</h1>
-      <p class="text-xs text-white">Your ultimate weather forecast companion.</p>
-    </div>
-
-    <div class="flex items-center justify-between space-x-4">
-      <div class="relative flex-1">
-        <input id="city-input" type="text" placeholder="Search for a city..."
-          class="w-full p-3 pl-12 pr-16 text-gray-800 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
-          autocomplete="off" />
-        <span
-          class="material-icons w-5 h-5 absolute top-1/2 left-4 transform -translate-y-1/2 text-teal-600">search</span>
-
-        <!-- recently searched item -->
-        <div class="absolute w-full mt-2 bg-white rounded-lg shadow-md p-4 space-y-2 z-10 hidden">
-          <ul id="search-history">
-            <!-- Recently Searched Items will appear here -->
-          </ul>
-        </div>
-      </div>
-      <button id="my-location">
-        <span class="material-icons text-white hover:scale-110">my_location</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- //////////////////////////////////////////////// Main Section ///////////////////////////////////////////////////////////// -->
-  <main class="bg-lime-200 text-gray-800 p-6 rounded-2xl shadow-xl max-w-4xl mx-auto mt-2">
-    <div id="main-header" class="text-center mb-6">
-      <!-- Weather Info will appear here -->
-    </div>
-    <div
-      class="flex flex-col lg:flex-row justify-center items-center bg-gradient-to-b from-lime-100 to-lime-50 text-black p-6 rounded-lg shadow-lg mx-auto mb-4">
-      <!-- Weather Icon and Main Info -->
-      <div id="main-body" class="flex items-center mb-4 lg:mb-0 lg:mr-6">
-        <!-- Weather Info -->
-      </div>
-    </div>
-    <div id="main-footer" class="bg-lime-200 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-      <!-- Weather Info -->
-    </div>
-  </main>
-
-  <!-- /////////////////////////////////////////////// Hourly Forecast ///////////////////////////////////////////////////////////-->
-  <section
-    class="bg-gradient-to-b from-lime-100 to-lime-50 text-gray-800 p-6 rounded-2xl shadow-xl max-w-4xl mx-auto mt-4">
-    <div class="text-center">
-      <h2 class="text-2xl font-bold">Hourly Forecast</h2>
-    </div>
-
-    <!-- Hourly Forecast -->
-    <div id="hourly-forecast" class="flex overflow-x-auto scroll-smooth py-4 space-x-2 md:justify-normal">
-      <!-- Mini Hourly Card will appear here-->
-    </div>
-  </section>
-
-  <!-- ////////////////////////////////////////////// daily forecast data //////////////////////////////////////////////////////// -->
-  <section
-    class="bg-gradient-to-b from-lime-100 to-lime-50 text-gray-800 p-6 rounded-2xl shadow-xl max-w-4xl mx-auto mt-4">
-    <!-- Section Header -->
-    <div class="text-center mb-6">
-      <h2 class="text-2xl font-bold">Daily Forecast</h2>
-    </div>
-
-    <!-- Forecast Container -->
-    <div id="daily-forecast" class="flex flex-row overflow-x-auto overflow-hidden scroll-smooth">
-      <!-- Forecast Card will appear here-->
-    </div>
-  </section>
-
-  <!-- //////////////////////////////////////////////// Footer Section /////////////////////////////////////////////////////////// -->
-  <footer class="bg-gradient-to-r from-blue-400 to-teal-500 text-white p-6 shadow-xl rounded-xl max-w-4xl mx-auto mt-2">
-    <div class="text-center">
-      <p class="text-white">Crafted with <span class="text-red-500">&hearts;</span> in India 🇮🇳 | Weather data by
-        OpenWeatherMap
-      </p>
-    </div>
-  </footer>
-  <div id="loader" class="loader"></div>
-  <script src="./src/scripts/main.js"></script>
+<body class="m-0 font-sans antialiased text-gray-800">
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 
 </html>

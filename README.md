@@ -1,60 +1,150 @@
-# Weather-Forecast-Application (CloudCompass)
+# CloudCompass | Real-Time Weather & Live Air Quality (AQI) Platform
 
-Stay updated with accurate and real-time weather forecasts. Get insights into temperature, humidity, wind speed, and more with Weather Forecast Application.
+[![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**CloudCompass** is a modern, high-performance environmental dashboard engineered with **React 18**, **Vite**, and **Tailwind CSS**. Designed for atmospheric clarity and real-time awareness, CloudCompass combines live meteorological forecasts with hyper-local physical air quality telemetry in a synchronized dual-mode application.
+
+---
+
+## Key Highlights
+
+- **Dual-Mode Architecture (`AQI` & `Weather`)**:
+  - **Air Quality (AQI)**: Live Indian CPCB (0–500 scale) and US EPA index telemetry, continuous spectrum slider, active pollutant telemetry (PM2.5, PM10, TVOC, Noise), 24-hour hourly trend sparkline, hyper-local neighborhood sensor stations, and a real-time polluted cities leaderboard.
+  - **Weather Forecast**: Detailed current meteorological observations, 3-hourly forecast sequence, and 5-day daily forecast breakdown (temperatures, condition icons, wind speed, pressure, humidity) via OpenWeatherMap.
+- **Docked Tab Navigation (Inspired by AQI.in)**: Clean, compact browser-style tabs docked directly above the dashboard view with top-accent indicators.
+- **Dual-Theme Design (Light & Dark)**:
+  - **Light Theme**: Bright, luminous daytime atmosphere featuring the photographic sky backdrop with a fresh ambient overlay, crisp white content cards, and dark slate typography.
+  - **Dark Theme**: Deep midnight atmosphere with cosmic celestial backdrop, dark obsidian cards, and neon glowing telemetry.
+  - **Symmetric Gradient Framing**: Signature teal-to-cyan gradient on both Header and Footer framing the workspace.
+- **Unified Standard Comparison**: Seamless toggle between **Indian CPCB** and **US EPA** standards with real-time numeric badges and category mappings.
+- **Hyper-Local Neighborhood Sensors**: Pinpoints the closest physical monitoring sensor to your exact GPS coordinates or selected neighborhood, with real distances and direct one-click sensor selection.
+- **Zero Clutter**: Eliminates placeholder "N/A" cards—only actively monitored sensor parameters with valid telemetry are displayed.
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Framework** | [React 18](https://react.dev/) | Component architecture, state hooks, and declarative UI |
+| **Build Tool** | [Vite 6](https://vitejs.dev/) | Instant HMR and high-speed ESBuild bundling |
+| **Styling** | [Tailwind CSS 3](https://tailwindcss.com/) | Responsive utility-first design, dual dark/light themes |
+| **Icons** | [Lucide React](https://lucide.dev/) | Lightweight, accessible SVG icon set |
+| **Weather Telemetry** | [OpenWeatherMap API](https://openweathermap.org/) | 5-day / 3-hour global meteorological forecast |
+| **AQI Telemetry** | [AQI.in](https://www.aqi.in) Cluster | Live hyper-local physical sensor network telemetry |
+
+---
 
 ## Project Structure
 
 ```
 Weather-Forecast-Application/
-├── index.html
-├── README.md
-├── src/
-│   ├── img/
-│   ├── scripts/
-│   │   └── main.js
-│   ├── styles/
-│   │   ├── custom.css
-│   │   ├── input.css
-│   │   └── style.css
-├── tailwind.config.js
+├── index.html                   # Entry HTML document with theme pre-hydration
+├── package.json                 # Dependencies & build scripts
+├── vite.config.js               # Vite bundler configuration
+├── tailwind.config.js           # Tailwind theme extensions & dark mode config
+├── postcss.config.js            # PostCSS pipeline
+├── .gitignore                   # Production ignore rules
+├── AQI_REALTIME_MONITOR_API.md  # Detailed API endpoints documentation
+├── scripts/
+│   └── patch-rollup.js          # Cross-platform wasm fallback helper
+└── src/
+    ├── main.jsx                 # Application entrypoint
+    ├── App.jsx                  # State orchestration, GPS & mode synchronization
+    ├── index.css                # Dual-theme styling & custom scrollbars
+    ├── img/
+    │   └── bg-img.jpg           # Atmospheric sky backdrop image
+    ├── constants/
+    │   ├── api.js               # API endpoints, default location & storage keys
+    │   └── aqiStandards.js      # CPCB / US EPA standards, color matrices & thresholds
+    ├── services/
+    │   ├── weatherService.js    # OpenWeatherMap client & data normalization
+    │   └── aqiService.js        # AQI.in client, token manager & geo calculations
+    ├── hooks/
+    │   ├── useGeolocation.js    # Browser GPS geolocation hook with error handling
+    │   └── useLocalStorage.js   # Type-safe persistent storage hook
+    └── components/
+        ├── common/
+        │   ├── Header.jsx       # Branding & compact theme switcher
+        │   ├── SearchBar.jsx    # Autocomplete search with popular city chips
+        │   ├── Footer.jsx       # Symmetric gradient footer with project attribution
+        │   └── Loader.jsx       # Pulsing telemetry loader
+        ├── aqi/
+        │   ├── AQIView.jsx      # AQI mode composition container
+        │   ├── AQIHero.jsx      # Master AQI card, spectrum slider & micro-weather
+        │   ├── PollutantGrid.jsx# Active pollutant cards with colored border accents
+        │   ├── SensorWeather.jsx# On-site meteorological observations
+        │   ├── TrendChart.jsx   # 24-hour SVG trendline with hover tooltips
+        │   ├── NearbyStations.jsx# Nearby physical monitoring sensors list
+        │   └── TopPollutedCities.jsx # Live polluted cities leaderboard
+        └── weather/
+            ├── WeatherView.jsx  # Weather mode container
+            ├── CurrentWeather.jsx # Temperature, feels-like & metrics card
+            ├── HourlyForecast.jsx # Horizontal 24-hour forecast strip
+            └── DailyForecast.jsx  # 5-day daily forecast cards
 ```
 
-### Installation & Usage
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/vikasmukhiya1999/Weather-Forecast-Application.git
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js** (v18.0.0 or higher recommended)
+- **npm** (v9.0.0 or higher)
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Vikas-900/Weather-Forecast-Application.git
+   cd Weather-Forecast-Application
    ```
-2. Open `index.html` in a browser.
-3. check weather by using cityname OR location button.
 
-#### Codebase Overview
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-- **index.html**: The main HTML file that structures the web application.
-- **src/scripts/main.js**: Contains the JavaScript code for fetching weather data from the OpenWeatherMap API and updating the UI.
-- **src/styles/custom.css**: Custom CSS for additional styling.
-- **src/styles/input.css**: Tailwind CSS directives for base, components, and utilities.
-- **src/styles/style.css**: Compiled Tailwind CSS styles.
-- **tailwind.config.js**: Configuration file for Tailwind CSS.
+3. **Start the local development server:**
+   ```bash
+   npm run dev
+   ```
+   Open your browser and navigate to `http://localhost:3000/` (or `http://localhost:3001/` if port 3000 is occupied).
 
-## Description
+4. **Build for production:**
+   ```bash
+   npm run build
+   ```
+   The compiled static assets will be output to the `dist/` directory.
 
-This application provides real-time weather forecasts for any city. Users can search for a city or use their current location to get weather updates. The application displays current weather conditions, 3-hourly forecasts, and daily forecasts with detailed information such as temperature, humidity, wind speed, and more.
+5. **Preview production build locally:**
+   ```bash
+   npm run preview
+   ```
 
-### Future Planning
+---
 
-- **Data Accuracy**: Focus on improving the accuracy of weather data by integrating additional weather APIs and implementing data validation techniques.
-- **UI Refurbishment**: Enhance the user interface for a more intuitive and visually appealing experience. This includes responsive design improvements and better accessibility features.
-- **Bug Fixes**: Regularly identify and fix bugs to ensure a smooth user experience.
-- **New Features**: Add new features such as weather alerts, historical weather data, and user preferences for units of measurement.
-- **Performance Optimization**: Optimize the application for faster load times and better performance on various devices.
+## Architectural Principles
 
-### Key Insights
+- **DRY (Don't Repeat Yourself)**: Shared configuration for standards, unified coordinate resolution, and reusable hooks for geolocation and theme persistence.
+- **KISS (Keep It Simple, Stupid)**: Native React state and lightweight inline SVG charting without bulky dependencies, preserving fast bundle sizes and fast initial loads.
+- **Resilient Fallbacks**: If GPS is unavailable, the application gracefully defaults to New Delhi. If a neighborhood sensor temporarily lacks specific parameters, the app falls back to city-level telemetry seamlessly.
 
-- **User-Centric Design**: Prioritize user experience by making the application easy to navigate and use.
-- **Real-Time Updates**: Ensure that weather data is updated in real-time to provide the most accurate information.
-- **Scalability**: Design the application to handle a growing number of users and data sources efficiently.
-- **Security**: Implement security best practices to protect user data and ensure the integrity of the application.
+---
 
+## Attribution & Disclaimer
 
-## Live Demo
-[Live Hosted Link](https://weather947-app.netlify.app/)
+This project is an **independent educational project dedicated to environmental and atmospheric awareness**.
+- **Air Quality Telemetry**: Referenced courtesy of the public monitoring network and sensors indexed via [AQI.in](https://www.aqi.in).
+- **Weather Data**: Powered by the [OpenWeatherMap API](https://openweathermap.org/).
+- All trademarks, logos, and brand names belong to their respective owners.
+
+---
+
+## License
+
+This project is open-source and available under the [MIT License](LICENSE).

@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  min-height: 100vh;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* Light Theme: Bright, luminous daytime atmosphere with visible background image & soft sky tint */
+html:not(.dark) body,
+html.light body {
+  background-color: #f0fdfa;
+  background-image: 
+    linear-gradient(180deg, rgba(240, 253, 250, 0.70) 0%, rgba(248, 250, 252, 0.75) 100%),
+    radial-gradient(at 0% 0%, rgba(224, 242, 254, 0.5) 0px, transparent 60%),
+    radial-gradient(at 100% 0%, rgba(204, 251, 241, 0.4) 0px, transparent 50%),
+    url("./img/bg-img.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+  color: #0f172a;
+}
+
+/* Dark Theme: Deep midnight atmosphere with cosmic stars and subtle teal auroral glow */
+html.dark body {
+  background-color: #030712;
+  background-image:
+    radial-gradient(ellipse at 20% 15%, rgba(15, 23, 42, 0.95), transparent 70%),
+    radial-gradient(ellipse at 85% 85%, rgba(13, 148, 136, 0.18), transparent 60%),
+    url("./img/bg-img.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+  color: #f8fafc;
+}
+
+/* Custom scrollbars for horizontal forecast rows */
+.horizontal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #0d9488 #e2e8f0;
+}
+
+.horizontal-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.horizontal-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+.horizontal-scroll::-webkit-scrollbar-thumb {
+  background-color: #0d9488;
+  border-radius: 8px;
+}
+
+.dark .horizontal-scroll {
+  scrollbar-color: #0f766e #1e293b;
+}
+
+.dark .horizontal-scroll::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark .horizontal-scroll::-webkit-scrollbar-thumb {
+  background-color: #0f766e;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
