@@ -28,7 +28,7 @@ export function NearbyStations({
   return (
     <div
       id="nearby-sensors-section"
-      className={`backdrop-blur-xl p-6 rounded-3xl max-w-4xl mx-auto mt-4 transition-all duration-300 border ${
+      className={`backdrop-blur-xl p-4 sm:p-6 rounded-3xl max-w-4xl mx-auto mt-4 transition-all duration-300 border ${
         isDark
           ? "bg-slate-900/95 text-white border-slate-800 shadow-2xl"
           : "bg-white text-slate-800 border-slate-200/90 shadow-xl shadow-slate-200/50"
@@ -82,14 +82,14 @@ export function NearbyStations({
             <div
               key={idx}
               onClick={() => onSelectStation && onSelectStation(st)}
-              className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group ${
+              className={`p-3.5 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between group hover:-translate-y-0.5 hover:shadow-md ${
                 isSelected
                   ? isDark
                     ? "bg-teal-950/60 border-teal-500 ring-2 ring-teal-500/30 text-white"
                     : "bg-teal-50/90 border-teal-400 ring-2 ring-teal-500/20 text-slate-900"
                   : isDark
-                  ? "bg-slate-800/80 hover:bg-slate-800 border-slate-700/80 hover:border-slate-600 text-white"
-                  : "bg-slate-50/80 hover:bg-white border-slate-200 hover:border-teal-200 text-slate-900 shadow-xs hover:shadow-md"
+                  ? "bg-slate-800/80 hover:bg-slate-800 border-slate-700/80 hover:border-teal-500/40 text-white"
+                  : "bg-slate-50/80 hover:bg-white border-slate-200 hover:border-teal-300 text-slate-900 shadow-xs"
               }`}
             >
               <div className="flex items-start justify-between gap-2">

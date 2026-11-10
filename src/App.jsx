@@ -346,7 +346,7 @@ export function App() {
     >
       {/* Header Container */}
       <header
-        className={`p-6 shadow-xl rounded-3xl max-w-4xl mx-auto transition-all duration-300 border ${
+        className={`p-4 sm:p-6 shadow-xl rounded-3xl max-w-4xl mx-auto transition-all duration-300 border ${
           theme === "dark"
             ? "bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 border-slate-800 text-white shadow-2xl shadow-teal-950/40"
             : "bg-gradient-to-r from-teal-500 via-teal-600 to-cyan-600 border-teal-400/30 text-white shadow-xl shadow-teal-600/20"
@@ -368,28 +368,39 @@ export function App() {
         />
       </header>
 
-      {/* Modern Segmented View Mode Capsule Switcher */}
+      {/* Modern Segmented View Mode Capsule Switcher with Fluid Sliding Indicator */}
       <div className="max-w-md mx-auto my-5 px-2 select-none">
         <div
-          className={`p-1 rounded-2xl sm:rounded-full border backdrop-blur-xl transition-all duration-300 flex items-center shadow-inner ${
+          className={`relative p-1 rounded-full border backdrop-blur-xl transition-all duration-300 flex items-center shadow-inner ${
             theme === "dark"
               ? "bg-slate-900/80 border-slate-800/80"
               : "bg-slate-200/70 border-slate-300/60"
           }`}
         >
+          {/* Animated Smooth Sliding Pill */}
+          <div
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-all duration-300 ease-out shadow-md pointer-events-none ${
+              mode === "aqi" ? "left-1" : "left-[calc(50%+2px)]"
+            } ${
+              theme === "dark"
+                ? "bg-slate-800 border border-slate-700/60 shadow-black/40"
+                : "bg-white border border-slate-200/90 shadow-slate-300/70"
+            }`}
+          />
+
           {/* AQI Mode Tab */}
           <button
             type="button"
             onClick={() => handleModeChange("aqi")}
             aria-pressed={mode === "aqi"}
-            className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-xl sm:rounded-full text-xs sm:text-sm font-black transition-all duration-200 cursor-pointer outline-none select-none ${
+            className={`relative z-10 flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-full text-xs sm:text-sm font-black transition-colors duration-200 cursor-pointer outline-none select-none ${
               mode === "aqi"
                 ? theme === "dark"
-                  ? "bg-slate-800 text-white shadow-md shadow-black/30 border border-slate-700/50"
-                  : "bg-white text-teal-950 shadow-md shadow-slate-300/60 border border-slate-200/80"
+                  ? "text-white"
+                  : "text-teal-950"
                 : theme === "dark"
-                ? "text-slate-400 hover:text-white hover:bg-slate-800/40"
-                : "text-slate-600 hover:text-slate-950 hover:bg-white/40"
+                ? "text-slate-400 hover:text-slate-200"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Wind
@@ -412,14 +423,14 @@ export function App() {
             type="button"
             onClick={() => handleModeChange("weather")}
             aria-pressed={mode === "weather"}
-            className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-xl sm:rounded-full text-xs sm:text-sm font-black transition-all duration-200 cursor-pointer outline-none select-none ${
+            className={`relative z-10 flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-full text-xs sm:text-sm font-black transition-colors duration-200 cursor-pointer outline-none select-none ${
               mode === "weather"
                 ? theme === "dark"
-                  ? "bg-slate-800 text-white shadow-md shadow-black/30 border border-slate-700/50"
-                  : "bg-white text-teal-950 shadow-md shadow-slate-300/60 border border-slate-200/80"
+                  ? "text-white"
+                  : "text-teal-950"
                 : theme === "dark"
-                ? "text-slate-400 hover:text-white hover:bg-slate-800/40"
-                : "text-slate-600 hover:text-slate-950 hover:bg-white/40"
+                ? "text-slate-400 hover:text-slate-200"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Sun

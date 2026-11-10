@@ -70,6 +70,14 @@ html.dark body {
   scrollbar-width: none !important; /* Firefox */
 }
 
+/* Tabular numerals for jitter-free real-time telemetry metrics */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  -moz-font-feature-settings: "tnum";
+  -webkit-font-feature-settings: "tnum";
+  font-feature-settings: "tnum";
+}
+
 /* Glassmorphism utility */
 .glass-panel {
   background: rgba(255, 255, 255, 0.90);

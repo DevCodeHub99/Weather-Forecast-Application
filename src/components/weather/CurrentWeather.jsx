@@ -38,7 +38,7 @@ export function CurrentWeather({
 
   return (
     <div
-      className={`backdrop-blur-xl p-5 sm:p-6 rounded-3xl max-w-4xl mx-auto border transition-all duration-300 ${
+      className={`backdrop-blur-xl p-4 sm:p-6 rounded-3xl max-w-4xl mx-auto border transition-all duration-300 ${
         isDark
           ? "bg-slate-900/95 text-white border-slate-800 shadow-2xl"
           : "bg-white text-slate-800 border-slate-200/90 shadow-xl shadow-slate-200/50"
@@ -105,7 +105,7 @@ export function CurrentWeather({
 
       {/* Main Temperature & Weather Hero Row */}
       <div
-        className={`p-5 sm:p-6 rounded-2xl mb-4 border transition-all ${
+        className={`p-4 sm:p-6 rounded-2xl mb-4 border transition-all ${
           isDark
             ? "bg-gradient-to-br from-slate-800/90 via-slate-800/60 to-slate-900/90 border-slate-700/80 text-white shadow-inner"
             : "bg-gradient-to-br from-teal-50/90 via-cyan-50/60 to-emerald-50/90 border-teal-200/70 text-slate-900 shadow-sm"
@@ -124,7 +124,7 @@ export function CurrentWeather({
             />
             <div>
               <div className="flex items-start">
-                <span className={`text-5xl sm:text-6xl font-black tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+                <span className={`text-5xl sm:text-6xl font-black tracking-tight tabular-nums ${isDark ? "text-white" : "text-slate-900"}`}>
                   {current.temp}
                 </span>
                 <span className={`text-2xl sm:text-3xl font-extrabold mt-1 ${isDark ? "text-teal-400" : "text-teal-600"}`}>

@@ -108,7 +108,7 @@ export function HourlyForecast({ hourly, advisory, astronomy, theme = "light" })
 
   return (
     <section
-      className={`backdrop-blur-xl p-5 sm:p-6 rounded-3xl max-w-4xl mx-auto border transition-all duration-300 relative ${
+      className={`backdrop-blur-xl p-4 sm:p-6 rounded-3xl max-w-4xl mx-auto border transition-all duration-300 relative ${
         isDark
           ? "bg-slate-900/95 text-white border-slate-800 shadow-2xl"
           : "bg-white text-slate-800 border-slate-200/90 shadow-xl shadow-slate-200/50"
@@ -168,6 +168,28 @@ export function HourlyForecast({ hourly, advisory, astronomy, theme = "light" })
 
       {/* Main Timeline Scroll Track with Floating Navigation Buttons */}
       <div className="relative group">
+        {/* Left Gradient Edge Overflow Fade Mask */}
+        {canScrollLeft && (
+          <div
+            className={`absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none transition-opacity duration-300 ${
+              isDark
+                ? "bg-gradient-to-r from-slate-900 via-slate-900/60 to-transparent"
+                : "bg-gradient-to-r from-white via-white/60 to-transparent"
+            }`}
+          />
+        )}
+
+        {/* Right Gradient Edge Overflow Fade Mask */}
+        {canScrollRight && (
+          <div
+            className={`absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none transition-opacity duration-300 ${
+              isDark
+                ? "bg-gradient-to-l from-slate-900 via-slate-900/60 to-transparent"
+                : "bg-gradient-to-l from-white via-white/60 to-transparent"
+            }`}
+          />
+        )}
+
         {/* Left Scroll Navigation Button */}
         {canScrollLeft && (
           <button

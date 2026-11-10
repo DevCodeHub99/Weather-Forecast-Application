@@ -67,7 +67,7 @@ export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "li
           isDark
             ? "bg-slate-900/95 text-white border-slate-800 shadow-2xl"
             : "bg-white text-slate-800 border-slate-200/90 shadow-xl shadow-slate-200/50"
-        } backdrop-blur-xl p-6 sm:p-8 rounded-3xl border overflow-hidden transition-all duration-300`}
+        } backdrop-blur-xl p-4 sm:p-6 lg:p-7 rounded-3xl border overflow-hidden transition-all duration-300`}
       >
         {/* Ambient atmospheric glows reflecting current AQI level (only in dark mode to keep light mode pristine) */}
         {isDark && (
@@ -254,7 +254,7 @@ export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "li
                 </div>
                 <div className="flex items-baseline space-x-2.5">
                   <span
-                    className="text-6xl sm:text-7xl font-black tracking-tight drop-shadow-sm"
+                    className="text-6xl sm:text-7xl font-black tracking-tight drop-shadow-sm tabular-nums"
                     style={{ color: activeBadge.color }}
                   >
                     {activeAQI}

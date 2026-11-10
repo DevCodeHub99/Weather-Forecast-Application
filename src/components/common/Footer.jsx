@@ -6,7 +6,7 @@ export function Footer({ theme = "light" }) {
 
   return (
     <footer
-      className={`backdrop-blur-xl p-6 rounded-3xl max-w-4xl mx-auto mt-6 text-center border transition-all duration-300 ${
+      className={`backdrop-blur-xl p-4 sm:p-6 rounded-3xl max-w-4xl mx-auto mt-6 text-center border transition-all duration-300 ${
         isDark
           ? "bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 border-slate-800 text-white shadow-2xl shadow-teal-950/40"
           : "bg-gradient-to-r from-teal-500 via-teal-600 to-cyan-600 border-teal-400/30 text-white shadow-xl shadow-teal-600/20"

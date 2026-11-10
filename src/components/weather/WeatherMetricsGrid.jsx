@@ -51,7 +51,7 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
   // Cloud cover
   const cloud = current.cloud !== undefined ? current.cloud : (current.condition?.toLowerCase().includes("cloud") ? 65 : 20);
 
-  const cardBase = `p-4 rounded-2xl border transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 hover:shadow-lg cursor-pointer group ${
+  const cardBase = `p-4 rounded-2xl border transition-all duration-300 flex flex-col justify-between min-h-[114px] hover:-translate-y-1 hover:shadow-lg cursor-pointer group ${
     isDark
       ? "bg-slate-800/80 border-slate-700/80 text-white hover:border-teal-500/40"
       : "bg-slate-50 border-slate-200/90 text-slate-900 hover:border-teal-400 hover:bg-white"

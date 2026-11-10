@@ -101,7 +101,7 @@ export function PollutantGrid({ iaqi = {}, stationName = "", theme = "light" }) 
 
   return (
     <div
-      className={`backdrop-blur-xl p-6 sm:p-8 rounded-3xl max-w-4xl mx-auto mt-4 transition-all duration-300 border ${
+      className={`backdrop-blur-xl p-4 sm:p-6 lg:p-7 rounded-3xl max-w-4xl mx-auto mt-4 transition-all duration-300 border ${
         isDark
           ? "bg-slate-900/95 text-white border-slate-800 shadow-2xl"
           : "bg-white text-slate-800 border-slate-200/90 shadow-xl shadow-slate-200/50"
@@ -204,7 +204,7 @@ export function PollutantGrid({ iaqi = {}, stationName = "", theme = "light" }) 
           return (
             <div
               key={key}
-              className={`relative transition-all duration-200 p-4 rounded-2xl border border-l-4 ${borderAccent} flex flex-col justify-between group shadow-sm ${
+              className={`relative transition-all duration-300 p-4 rounded-2xl border border-l-4 ${borderAccent} flex flex-col justify-between group shadow-sm hover:-translate-y-0.5 hover:shadow-md ${
                 isDark
                   ? "bg-slate-800/80 hover:bg-slate-800 border-slate-700/80 text-white"
                   : "bg-white hover:bg-slate-50 border-slate-200 text-slate-900 shadow-slate-200/50"
@@ -235,7 +235,7 @@ export function PollutantGrid({ iaqi = {}, stationName = "", theme = "light" }) 
                 {/* Numeric Readout */}
                 <div className="text-right flex-shrink-0">
                   <span
-                    className={`text-2xl font-black tracking-tight ${
+                    className={`text-2xl font-black tracking-tight tabular-nums ${
                       isDark ? "text-white" : "text-slate-900"
                     }`}
                   >
