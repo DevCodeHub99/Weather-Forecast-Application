@@ -14,8 +14,8 @@
 ### 1. Single Unified Data Provider ([`AQI.in`](https://www.aqi.in))
 Both air quality and meteorological weather data are sourced exclusively from the **AQI.in** physical sensor network:
 - **Zero Third-Party Dependencies**: No OpenWeatherMap, no secondary API keys, and no multi-provider overhead.
-- **Single Request Ingestion**: A single call fetches all pollutant concentrations (PM2.5, PM10, TVOC, Noise) and complete meteorological parameters (`temp_c`, `humidity`, `uv`, `pressure_mb`, `wind_kph`, `vis_km`, `cloud`, `condition`).
-- **Zero Configuration**: Works completely out of the box without requiring API keys or environment setup.
+- **Single Request Ingestion**: A single round-trip call fetches all pollutant concentrations (PM2.5, PM10, TVOC, Noise) and complete meteorological parameters (`temp_c`, `humidity`, `uv`, `pressure_mb`, `wind_kph`, `vis_km`, `cloud`, `condition`).
+- **Zero Configuration**: Runs completely out of the box without requiring API keys or complex environment configuration.
 - **JWT Token Lifecycle**: Client manages read-only bearer tokens with `localStorage` persistence and transparent self-healing retries on HTTP 401.
 
 ---
@@ -26,13 +26,14 @@ Both air quality and meteorological weather data are sourced exclusively from th
 - **Live Standard Comparison**: Instant toggle between **Indian CPCB** (0–500 scale) and **US EPA** standards with real-time numeric badges and health assessments.
 - **Dynamic Spectrum Gauge**: Interactive continuous gradient track indicating current air quality severity.
 - **Active Pollutant Telemetry**: Live readings for PM2.5, PM10, TVOC, and environmental noise without placeholder clutter.
-- **24-Hour Sparkline**: SVG trendline tracking 24-hour diurnal pollution curves with hover tooltips.
+- **24-Hour Bar Histogram**: Interactive category-coded bar graph tracking 24-hour diurnal pollution curves with hover/touch scrubbing.
 - **Neighborhood Micro-Sensors**: Pinpoints physical sensor hardware closest to your exact GPS coordinates with live relative distances.
 - **Leaderboard**: Real-time ranking of top polluted cities.
 
-#### ☀ Reimagined Weather Outlook (Inspired by `aqi.in/weather/` & Apple Weather)
+#### ☀ Reimagined Weather Outlook
 - **Atmospheric Hero**: Prominent temperature display, perceived "Feels like", diurnal High/Low expected range, and localized sky conditions with official AQI.in vector SVG icons.
-- **24-Hour Hourly Timeline**: Compact, swipeable horizontal slider tracking temperature, precipitation probability, and wind speed.
+- **24-Hour Hourly Timeline**: Compact, swipeable horizontal slider tracking temperature curve, precipitation probability, and solar milestone chips (`🌅 Sunrise` / `🌇 Sunset`) with zero scrollbars.
+- **Real-Time Sun Timeline & Solar Cycle**: High-precision NOAA solar calculation engine tracking civil dawn, sunrise, solar noon, sunset, dusk, and the real-time celestial position of the sun moving towards sunset.
 - **5-Day Outlook with Temperature Bars**: Clean weekly trajectory with visual horizontal temperature distribution bars and real-time position indicators.
 - **Meteorological Intelligence Grid**: 6 high-density cards:
   1. **UV Index**: WHO index, category badge, and sun safety advisory.
@@ -44,10 +45,13 @@ Both air quality and meteorological weather data are sourced exclusively from th
 
 ---
 
-### 3. Adaptive Dual-Theme UI
-- **Light Theme**: Crisp white cards (`bg-white`) over an ambient sky backdrop with teal accents and dark slate typography.
-- **Dark Theme**: Deep obsidian cards (`bg-slate-900`) with celestial backdrop and neon glowing telemetry.
-- **Symmetric Gradient Framing**: Header and Footer styled with signature teal-to-cyan gradients.
+### 3. Industry-Standard UI/UX System
+- **Segmented Capsule Controller**: Tactile, centered Apple/Linear-style mode switcher (Air Quality ⟷ Weather) with smooth sliding active pill and real-time status indicators.
+- **Circular Morphing Theme Switcher**: Single frosted-glass circular button with a 500ms spin-and-scale transition morphing smoothly between the Sun and Moon.
+- **Adaptive Dual-Theme Styling**:
+  - *Light Theme*: Bright, luminous atmosphere with frosted white glass cards over an ambient sky backdrop.
+  - *Dark Theme*: Deep obsidian cards with celestial backdrop and neon glowing telemetry.
+- **Touch & Accessibility Excellence**: Mobile-first touch targets, universal scrollbar suppression, and branded selection highlighting with zero blue text selection boxes.
 
 ---
 
@@ -74,19 +78,18 @@ Weather-Forecast-Application/
 ├── vite.config.js               # Vite bundler configuration
 ├── tailwind.config.js           # Tailwind theme extensions & dark mode config
 ├── postcss.config.js            # PostCSS pipeline
-├── scripts/
-│   └── patch-rollup.js          # Cross-platform wasm fallback helper
 └── src/
     ├── main.jsx                 # Application entrypoint
     ├── App.jsx                  # State orchestration & mode synchronization
-    ├── index.css                # Dual-theme styling & custom scrollbars
+    ├── index.css                # Dual-theme styling, scrollbar hiding & brand selection
     ├── img/
-    │   └── bg-img.jpg           # Atmospheric sky backdrop image
+    │   └── bg-img.avif          # High-performance lightweight atmospheric backdrop
     ├── constants/
     │   ├── api.js               # Endpoints, bootstrap credentials & storage keys
     │   └── aqiStandards.js      # CPCB / US EPA standards, color matrices & thresholds
     ├── utils/
-    │   └── weatherUtils.js      # Dew point, UV scale, wind compass & formatting
+    │   ├── weatherUtils.js      # Dew point, UV scale, wind compass & formatting
+    │   └── solarCalculator.js   # NOAA astronomical sunrise, sunset & solar elevation engine
     ├── services/
     │   ├── weatherService.js    # AQI.in meteorological normalization & forecast modeling
     │   └── aqiService.js        # AQI.in client, token manager & geo calculations
@@ -95,9 +98,9 @@ Weather-Forecast-Application/
     │   └── useLocalStorage.js   # Type-safe persistent storage hook
     └── components/
         ├── common/
-        │   ├── Header.jsx       # Branding & compact theme switcher
+        │   ├── Header.jsx       # Branding & circular morphing theme toggle
         │   ├── SearchBar.jsx    # Autocomplete search with popular city chips
-        │   ├── Footer.jsx       # Symmetric gradient footer with project attribution
+        │   ├── Footer.jsx       # Symmetric gradient footer with platform attribution
         │   └── Loader.jsx       # Pulsing telemetry loader
         ├── aqi/
         │   ├── AQIView.jsx      # AQI mode composition container
@@ -111,7 +114,7 @@ Weather-Forecast-Application/
             ├── WeatherView.jsx        # Weather mode container
             ├── CurrentWeather.jsx     # Temperature, feels-like & metrics card
             ├── HourlyForecast.jsx     # Horizontal 24-hour forecast strip with solar milestones
-            ├── SunTimeline.jsx        # Interactive solar arc graph with real-time sun position
+            ├── SunTimeline.jsx        # Astronomical solar arc graph with real-time sun position
             ├── DailyForecast.jsx      # 5-day daily forecast cards with range bars
             └── WeatherMetricsGrid.jsx # 6-card meteorological intelligence grid
 ```
@@ -149,14 +152,14 @@ Compiled static assets are generated in `dist/`.
 
 - **Single Provider Architecture**: Ingests both air quality and weather telemetry in a single network round-trip, cutting latency in half.
 - **DRY (Don't Repeat Yourself)**: Unified data normalization, centralized meteorological math in `weatherUtils.js`, and reusable storage and geolocation hooks.
-- **KISS & YAGNI**: Native React state without cumbersome state management libraries, keeping the production bundle under 72 kB (gzip).
+- **KISS & YAGNI**: Native React state without cumbersome state management libraries, keeping the production bundle compact (~78 kB gzip).
 - **Security**: Zero API secrets stored in client code; requests interface directly with public read-only environmental telemetry.
+- **Clean Tree Hygiene**: No leftover build directories (`dist/`), temporary scripts, or local `.env` files committed to version control.
 
 ---
 
-## Attribution & Disclaimer
+## Attribution & Platform Disclaimer
 
-This project is an **independent educational project dedicated to environmental and atmospheric awareness**.
 - **Environmental & Weather Telemetry**: Referenced courtesy of public monitoring networks and physical sensors indexed via [AQI.in](https://www.aqi.in).
 - All trademarks, logos, and brand names belong to their respective owners.
 
