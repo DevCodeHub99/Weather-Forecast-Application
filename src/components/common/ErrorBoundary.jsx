@@ -1,5 +1,6 @@
 import React from "react";
 import { AlertCircle, RotateCcw } from "lucide-react";
+import { captureException } from "../../utils/logger";
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -12,7 +13,10 @@ export class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("CloudCompass ErrorBoundary caught an exception:", error, errorInfo);
+    captureException(error, {
+      componentStack: errorInfo?.componentStack,
+      source: "ReactErrorBoundary"
+    });
   }
 
   handleReset = () => {

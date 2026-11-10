@@ -75,6 +75,7 @@ cp .env.example .env.local
 | `VITE_DEFAULT_COUNTRY` | `"IN"` | Fallback country code |
 | `VITE_DEFAULT_LAT` | `28.6139` | Fallback latitude coordinate |
 | `VITE_DEFAULT_LON` | `77.2090` | Fallback longitude coordinate |
+| `VITE_LOG_LEVEL` | `"warn"` (prod) / `"debug"` (dev) | Minimum logging threshold: `debug` \| `info` \| `warn` \| `error` \| `none` |
 
 ---
 
@@ -99,6 +100,7 @@ Weather-Forecast-Application/
     │   ├── api.js               # Endpoints, environment fallbacks & storage keys
     │   └── aqiStandards.js      # CPCB / US EPA bands, thresholds & formatting
     ├── utils/
+    │   ├── logger.js            # Production structured logger & telemetry hooks
     │   ├── solarCalculator.js   # NOAA astronomical sunrise, sunset & solar elevation
     │   └── weatherUtils.js      # Dew point, UV scale, wind direction & comfort math
     ├── services/
@@ -130,6 +132,28 @@ Weather-Forecast-Application/
             ├── DailyForecast.jsx      # 5-day forecast with temperature range bars
             └── WeatherMetricsGrid.jsx # 6-card meteorological intelligence grid
 ```
+
+---
+
+## Observability & Error Tracking
+
+CloudCompass features an enterprise logging and telemetry event bus ([`src/utils/logger.js`](file:///src/utils/logger.js)):
+
+- **Global Error Handlers**: Automatically intercepts uncaught exceptions and unhandled promise rejections with URL, timestamp, and stack traces.
+- **Pluggable APM Subscriptions**: Connect external monitoring tools (e.g., Sentry, Datadog, LogRocket) via zero-dependency hooks:
+  ```javascript
+  import { onError, onEvent } from "./utils/logger";
+
+  // Forward exceptions to Sentry / Datadog
+  onError((errorPayload) => {
+    // Sentry.captureException(errorPayload.error, { extra: errorPayload.context });
+  });
+
+  // Forward user interactions to analytics
+  onEvent((eventPayload) => {
+    // analytics.track(eventPayload.name, eventPayload.data);
+  });
+  ```
 
 ---
 

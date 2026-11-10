@@ -17,6 +17,7 @@ import {
   fetchTopPollutedCities
 } from "./services/aqiService";
 import { DEFAULT_LOCATION, STORAGE_KEYS } from "./constants/api";
+import { logger, trackEvent, captureException } from "./utils/logger";
 import { AlertCircle, X, Wind, Sun } from "lucide-react";
 
 export function App() {
@@ -119,7 +120,7 @@ export function App() {
       // Fetch top polluted cities leaderboard
       fetchTopPollutedCities(6).then(setTopCities).catch(() => {});
     } catch (err) {
-      console.warn("AQI data fetch warning:", err.message);
+      logger.warn("AQI data fetch warning:", err.message);
     }
   }, []);
 
@@ -159,6 +160,7 @@ export function App() {
         };
         setCurrentLocation(newLoc);
         recordSearchHistory(stationCity);
+        trackEvent("coords_located", { lat: stationLat, lon: stationLon, city: stationCity });
 
         // 3. Parallel fetch 24h trend & nearby stations
         const trendSlug = aqiClosest.location_slug || aqiClosest.slug;
@@ -168,6 +170,7 @@ export function App() {
         fetchNearbyStations(stationLat, stationLon).then(setNearbyStations).catch(() => {});
         fetchTopPollutedCities(6).then(setTopCities).catch(() => {});
       } catch (err) {
+        captureException(err, { action: "loadDataByCoords", lat, lon });
         setError(err.message || "Failed to fetch data for current coordinates.");
       } finally {
         setLoading(false);
@@ -232,6 +235,7 @@ export function App() {
           slug
         });
         recordSearchHistory(stationCity);
+        trackEvent("city_searched", { city: stationCity, slug });
 
         // 3. Fetch trend & nearby stations in parallel
         const trendSlug = aqiInfo.city_slug || aqiInfo.location_slug || slug;
@@ -243,6 +247,7 @@ export function App() {
         }
         fetchTopPollutedCities(6).then(setTopCities).catch(() => {});
       } catch (err) {
+        captureException(err, { action: "loadDataByCity", cityName, specificSlug });
         setError(err.message || "Failed to fetch data for the requested city.");
       } finally {
         setLoading(false);
@@ -284,7 +289,9 @@ export function App() {
         if (trendSlug) {
           fetch24HourTrend(trendSlug).then(setTrendData).catch(() => {});
         }
+        trackEvent("station_selected", { slug: targetSlug });
       } catch (err) {
+        captureException(err, { action: "handleSelectStation", targetSlug });
         // Only show error if we didn't already set station data
         if (typeof stationOrSlug !== "object" || !stationOrSlug.iaqi) {
           setError("Could not load station telemetry: " + err.message);
@@ -322,6 +329,7 @@ export function App() {
   // Switch mode handler
   const handleModeChange = (newMode) => {
     setMode(newMode);
+    trackEvent("mode_switched", { mode: newMode });
     // If AQI mode selected but no AQI data yet, fetch it for current location
     if (newMode === "aqi" && !aqiData && currentLocation.lat && currentLocation.lon) {
       loadAQIData(currentLocation.slug, currentLocation.lat, currentLocation.lon);

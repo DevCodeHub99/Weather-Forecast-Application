@@ -1,4 +1,5 @@
 import { AQI_API_BASE, DEFAULT_AQI_TOKEN, STORAGE_KEYS } from "../constants/api.js";
+import { logger } from "../utils/logger.js";
 
 /**
  * Manages Bearer Token with localStorage persistence & fallback
@@ -12,7 +13,7 @@ function getToken() {
       }
     }
   } catch (e) {
-    console.warn("Could not access localStorage:", e);
+    logger.debug("Could not access localStorage for token:", e);
   }
   return DEFAULT_AQI_TOKEN;
 }
@@ -23,7 +24,7 @@ function saveToken(token) {
       window.localStorage.setItem(STORAGE_KEYS.AQI_TOKEN, token);
     }
   } catch (e) {
-    console.warn("Could not save token:", e);
+    logger.debug("Could not save token to localStorage:", e);
   }
 }
 
@@ -54,6 +55,7 @@ async function aqiFetch(path, params = {}, timeoutMs = 10000) {
     });
 
     if (response.status === 401) {
+      logger.warn("AQI token expired, attempting self-healing retry with bootstrap token...");
       saveToken(DEFAULT_AQI_TOKEN);
       const retryRes = await fetch(url.toString(), {
         headers: { ...headers, Authorization: `Bearer ${DEFAULT_AQI_TOKEN}` },
@@ -75,6 +77,7 @@ async function aqiFetch(path, params = {}, timeoutMs = 10000) {
     return response.json();
   } catch (err) {
     if (err.name === "AbortError") {
+      logger.warn(`Telemetry request timed out after ${timeoutMs}ms: ${path}`);
       throw new Error("Telemetry request timed out. Please check your network connection.");
     }
     throw err;
@@ -147,7 +150,7 @@ export async function fetchAQIByCoords(lat, lon) {
       return nearestResult.data[0];
     }
   } catch (err) {
-    console.warn("Type 1 nearest sensor lookup failed, trying anchor:", err);
+    logger.debug("Type 1 nearest sensor lookup failed, trying anchor fallback:", err);
   }
 
   // 2. Fallback to anchor city level (type=2)
@@ -182,7 +185,7 @@ export async function fetchNearbyStations(lat, lon) {
     }
     return [];
   } catch (err) {
-    console.warn("Failed to fetch nearby stations:", err);
+    logger.warn("Failed to fetch nearby stations:", err);
     return [];
   }
 }
@@ -207,7 +210,7 @@ export async function fetch24HourTrend(slug) {
     }
     return null;
   } catch (err) {
-    console.warn("Failed to fetch 24-hour AQI history:", err);
+    logger.warn("Failed to fetch 24-hour AQI history:", err);
     return null;
   }
 }
@@ -238,7 +241,7 @@ export async function searchAQILocations(query) {
     }
     return [];
   } catch (err) {
-    console.warn("Failed location search:", err);
+    logger.warn("Failed location search:", err);
     return [];
   }
 }
@@ -260,7 +263,7 @@ export async function fetchTopPollutedCities(limit = 6) {
     }
     return [];
   } catch (err) {
-    console.warn("Failed to fetch top polluted cities:", err);
+    logger.warn("Failed to fetch top polluted cities:", err);
     return [];
   }
 }
