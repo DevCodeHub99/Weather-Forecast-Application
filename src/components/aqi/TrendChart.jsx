@@ -36,11 +36,26 @@ export function TrendChart({ trendData, theme = "light" }) {
   const [hoverIndex, setHoverIndex] = useState(null);
   const containerRef = useRef(null);
 
+  const values = trendData?.averageArray || [];
+  const count = values.length;
+
+  // Touch & pointer scrub navigation - unconditional hook declaration
+  const handlePointerScrub = useCallback(
+    (clientX) => {
+      if (!containerRef.current || count === 0) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const relativeX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+      const ratio = relativeX / rect.width;
+      const closestIdx = Math.floor(ratio * count);
+      setHoverIndex(Math.max(0, Math.min(count - 1, closestIdx)));
+    },
+    [count]
+  );
+
   if (!trendData || !trendData.averageArray || trendData.averageArray.length === 0) {
     return null;
   }
 
-  const values = trendData.averageArray;
   const times = trendData.timeArray || [];
   const minVal = trendData.minValue ?? Math.min(...values);
   const maxVal = trendData.maxValue ?? Math.max(...values);
@@ -61,7 +76,6 @@ export function TrendChart({ trendData, theme = "light" }) {
   // Dynamic scale ceiling with headroom for tooltip pill above highest bar
   const scaleMax = Math.max(100, Math.ceil((maxVal * 1.15) / 50) * 50);
 
-  const count = values.length;
   const colW = chartW / count;
   const barW = Math.max(4, Math.min(26, colW * 0.72));
 
@@ -95,19 +109,6 @@ export function TrendChart({ trendData, theme = "light" }) {
   const activeIndex = isInteracting ? hoverIndex : bars.length - 1;
   const activeBar = bars[activeIndex] || bars[bars.length - 1];
   const activeBadge = activeBar ? activeBar.badge : getCPCBBadge(0);
-
-  // Touch & pointer scrub navigation
-  const handlePointerScrub = useCallback(
-    (clientX) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const relativeX = Math.max(0, Math.min(rect.width, clientX - rect.left));
-      const ratio = relativeX / rect.width;
-      const closestIdx = Math.floor(ratio * count);
-      setHoverIndex(Math.max(0, Math.min(count - 1, closestIdx)));
-    },
-    [count]
-  );
 
   const handleTouchMove = (e) => {
     if (e.touches && e.touches.length > 0) {
