@@ -1,12 +1,35 @@
 import React, { useState, useRef, useCallback } from "react";
 import {
-  TrendingUp,
+  BarChart3,
   ArrowDownRight,
   ArrowUpRight,
   Activity,
-  Clock
+  Clock,
+  Info
 } from "lucide-react";
-import { getCPCBBadge, formatAQITimestamp } from "../../constants/aqiStandards";
+import {
+  getCPCBBadge,
+  formatAQITimestamp,
+  CPCB_BANDS
+} from "../../constants/aqiStandards";
+
+function formatShortHour(dateStr, idx, total) {
+  if (!dateStr) {
+    const hoursAgo = total - 1 - idx;
+    return hoursAgo === 0 ? "Now" : `${hoursAgo}h ago`;
+  }
+  try {
+    const cleanStr = String(dateStr).replace(/\.000Z$|Z$/, "").replace("T", " ");
+    const d = new Date(cleanStr);
+    if (isNaN(d.getTime())) return `${idx}:00`;
+    let hrs = d.getHours();
+    const ampm = hrs >= 12 ? "PM" : "AM";
+    hrs = hrs % 12 || 12;
+    return `${hrs} ${ampm}`;
+  } catch {
+    return `${idx}:00`;
+  }
+}
 
 export function TrendChart({ trendData, theme = "light" }) {
   const isDark = theme === "dark";
@@ -27,64 +50,63 @@ export function TrendChart({ trendData, theme = "light" }) {
   // SVG Coordinate Canvas Geometry
   const svgWidth = 800;
   const svgHeight = 220;
-  const padX = 14;
-  const padYTop = 28;
-  const padYBottom = 36;
+  const padX = 18;
+  const padYTop = 34;
+  const padYBottom = 30;
 
   const chartW = svgWidth - padX * 2;
   const chartH = svgHeight - padYTop - padYBottom;
-  const valRange = Math.max(maxVal - minVal, 20);
+  const baselineY = svgHeight - padYBottom;
 
-  // Compute point coordinates spanning full width
-  const points = values.map((val, idx) => {
-    const x = Math.round(padX + (idx / Math.max(values.length - 1, 1)) * chartW);
-    const normalizedY = (val - minVal) / valRange;
-    const y = Math.round(svgHeight - padYBottom - normalizedY * chartH);
+  // Dynamic scale ceiling with headroom for tooltip pill above highest bar
+  const scaleMax = Math.max(100, Math.ceil((maxVal * 1.15) / 50) * 50);
+
+  const count = values.length;
+  const colW = chartW / count;
+  const barW = Math.max(4, Math.min(26, colW * 0.72));
+
+  // Compute individual bar geometries and metadata
+  const bars = values.map((val, idx) => {
+    const centerX = padX + idx * colW + colW / 2;
+    const x = centerX - barW / 2;
+    const height = Math.max(6, (val / scaleMax) * chartH);
+    const y = baselineY - height;
     const timeFormatted = times[idx]
       ? formatAQITimestamp(times[idx]).time
       : `${idx}:00`;
-    return { x, y, val, time: timeFormatted };
+    const shortTime = formatShortHour(times[idx], idx, count);
+    const badge = getCPCBBadge(val);
+    return {
+      idx,
+      x,
+      y,
+      width: barW,
+      height,
+      centerX,
+      val,
+      time: timeFormatted,
+      shortTime,
+      badge
+    };
   });
 
-  // Generate smooth cubic bezier spline through all points
-  const splinePath = (() => {
-    if (points.length === 0) return "";
-    if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
-
-    let d = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[i];
-      const p1 = points[i + 1];
-      const mx = (p0.x + p1.x) / 2;
-      d += ` C ${mx} ${p0.y}, ${mx} ${p1.y}, ${p1.x} ${p1.y}`;
-    }
-    return d;
-  })();
-
-  // Soft gradient area fill underneath the curve
-  const areaPath = (() => {
-    if (!splinePath) return "";
-    const first = points[0];
-    const last = points[points.length - 1];
-    return `${splinePath} L ${last.x} ${svgHeight - padYBottom} L ${first.x} ${svgHeight - padYBottom} Z`;
-  })();
-
-  // Active point: hovered index or last available point (current)
+  // Active bar: hovered index or default to the most recent reading (last bar)
   const isInteracting = hoverIndex !== null;
-  const activePoint = isInteracting ? points[hoverIndex] : points[points.length - 1];
-  const activeBadge = getCPCBBadge(activePoint.val);
+  const activeIndex = isInteracting ? hoverIndex : bars.length - 1;
+  const activeBar = bars[activeIndex] || bars[bars.length - 1];
+  const activeBadge = activeBar ? activeBar.badge : getCPCBBadge(0);
 
-  // Touch and mouse coordinate scrubber handler
+  // Touch & pointer scrub navigation
   const handlePointerScrub = useCallback(
     (clientX) => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const relativeX = Math.max(0, Math.min(rect.width, clientX - rect.left));
       const ratio = relativeX / rect.width;
-      const closestIdx = Math.round(ratio * (points.length - 1));
-      setHoverIndex(Math.max(0, Math.min(points.length - 1, closestIdx)));
+      const closestIdx = Math.floor(ratio * count);
+      setHoverIndex(Math.max(0, Math.min(count - 1, closestIdx)));
     },
-    [points.length]
+    [count]
   );
 
   const handleTouchMove = (e) => {
@@ -97,12 +119,21 @@ export function TrendChart({ trendData, theme = "light" }) {
     handlePointerScrub(e.clientX);
   };
 
-  // Intermediate grid reference lines
-  const gridLines = [
-    { ratio: 1.0, label: `${maxVal}` },
-    { ratio: 0.5, label: `${Math.round(minVal + valRange * 0.5)}` },
-    { ratio: 0.0, label: `${minVal}` }
-  ];
+  // Horizontal threshold grid guidelines (4 steps scaled to maxVal)
+  const gridSteps = 4;
+  const gridLines = Array.from({ length: gridSteps }, (_, i) => {
+    const stepVal = Math.round((scaleMax / gridSteps) * (i + 1));
+    const y = baselineY - (stepVal / scaleMax) * chartH;
+    return { val: stepVal, y };
+  });
+
+  // Calculate tooltip coordinates clamped to canvas edges
+  const pillW = 46;
+  const pillH = 20;
+  const tooltipX = activeBar
+    ? Math.max(padX + pillW / 2, Math.min(svgWidth - padX - pillW / 2, activeBar.centerX))
+    : padX + pillW / 2;
+  const tooltipY = activeBar ? Math.max(8, activeBar.y - 24) : 8;
 
   return (
     <div
@@ -120,11 +151,11 @@ export function TrendChart({ trendData, theme = "light" }) {
               isDark ? "text-white" : "text-slate-900"
             }`}
           >
-            <TrendingUp className={`w-4 h-4 ${isDark ? "text-teal-400" : "text-teal-600"}`} />
+            <BarChart3 className={`w-4 h-4 ${isDark ? "text-teal-400" : "text-teal-600"}`} />
             <span>24-Hour Air Quality Trend</span>
           </h3>
           <p className={`text-xs mt-0.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-            Diurnal pollution curve & hourly concentration fluctuations
+            Interactive hourly pollution histogram & diurnal fluctuations
           </p>
         </div>
 
@@ -167,11 +198,11 @@ export function TrendChart({ trendData, theme = "light" }) {
 
       {/* Interactive Telemetry Readout Strip */}
       <div
-        className={`flex items-center justify-between text-xs px-3.5 py-2 rounded-2xl border mb-3 transition-all ${
+        className={`flex items-center justify-between text-xs px-3.5 py-2.5 rounded-2xl border mb-3 transition-all ${
           isInteracting
             ? isDark
-              ? "bg-slate-800/90 border-teal-500/40 shadow-sm"
-              : "bg-teal-50/80 border-teal-200 shadow-xs"
+              ? "bg-slate-800/90 border-teal-500/50 shadow-sm"
+              : "bg-teal-50/90 border-teal-300 shadow-xs"
             : isDark
             ? "bg-slate-800/50 border-slate-800"
             : "bg-slate-50 border-slate-200/70"
@@ -180,24 +211,29 @@ export function TrendChart({ trendData, theme = "light" }) {
         <div className="flex items-center space-x-2">
           <Clock className={`w-3.5 h-3.5 ${isDark ? "text-slate-400" : "text-slate-500"}`} />
           <span className={`font-semibold ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-            {isInteracting ? `Timeline: ${activePoint.time}` : "Latest Reading (24h Trend)"}
+            {isInteracting
+              ? `Timeline: ${activeBar.time}`
+              : `Latest Reading: ${activeBar.time}`}
           </span>
         </div>
 
         <div className="flex items-center space-x-2">
           <span className={`text-sm font-black ${isDark ? "text-white" : "text-slate-900"}`}>
-            AQI: {activePoint.val}
+            AQI: {activeBar.val}
           </span>
           <span
-            className="px-2.5 py-0.5 rounded-full text-[10px] font-black text-white shadow-xs"
-            style={{ backgroundColor: activeBadge.color }}
+            className="px-2.5 py-0.5 rounded-full text-[10px] font-black shadow-xs transition-colors"
+            style={{
+              backgroundColor: activeBadge.color,
+              color: activeBadge.textColor === "text-gray-900" ? "#111827" : "#ffffff"
+            }}
           >
             {activeBadge.category}
           </span>
         </div>
       </div>
 
-      {/* Full-Bleed Touch & Mouse Responsive Canvas */}
+      {/* Full-Bleed Touch & Mouse Responsive Bar Graph Canvas */}
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
@@ -205,7 +241,7 @@ export function TrendChart({ trendData, theme = "light" }) {
         onTouchStart={handleTouchMove}
         onTouchMove={handleTouchMove}
         onTouchEnd={() => setHoverIndex(null)}
-        className="relative w-full cursor-crosshair select-none touch-none py-1"
+        className="relative w-full cursor-pointer select-none touch-none py-1"
         style={{ touchAction: "none" }}
       >
         <svg
@@ -213,94 +249,149 @@ export function TrendChart({ trendData, theme = "light" }) {
           className="w-full h-44 sm:h-52 overflow-visible"
           preserveAspectRatio="none"
         >
-          <defs>
-            {/* Smooth multi-stop gradient fill under the curve */}
-            <linearGradient id="aqiTrendFill" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="0%"
-                stopColor={activeBadge.color}
-                stopOpacity={isDark ? "0.45" : "0.32"}
+          {/* Horizontal Reference Grid Guidelines */}
+          {gridLines.map((line, idx) => (
+            <g key={idx} className="pointer-events-none opacity-40">
+              <line
+                x1={padX}
+                y1={line.y}
+                x2={svgWidth - padX}
+                y2={line.y}
+                stroke={isDark ? "#475569" : "#cbd5e1"}
+                strokeDasharray="3 3"
+                strokeWidth="1"
               />
-              <stop
-                offset="70%"
-                stopColor={activeBadge.color}
-                stopOpacity={isDark ? "0.12" : "0.08"}
-              />
-              <stop offset="100%" stopColor={activeBadge.color} stopOpacity="0" />
-            </linearGradient>
+              <text
+                x={svgWidth - padX + 2}
+                y={line.y + 3}
+                textAnchor="start"
+                fontSize="9"
+                fontWeight="600"
+                fill={isDark ? "#64748b" : "#94a3b8"}
+              >
+                {line.val}
+              </text>
+            </g>
+          ))}
 
-            {/* Subtle curve stroke gradient */}
-            <linearGradient id="aqiTrendStroke" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#0d9488" />
-              <stop offset="40%" stopColor="#eab308" />
-              <stop offset="75%" stopColor="#f43f5e" />
-              <stop offset="100%" stopColor="#7e0023" />
-            </linearGradient>
-          </defs>
+          {/* Baseline Axis */}
+          <line
+            x1={padX}
+            y1={baselineY}
+            x2={svgWidth - padX}
+            y2={baselineY}
+            stroke={isDark ? "#334155" : "#e2e8f0"}
+            strokeWidth="1"
+          />
 
-          {/* Background Reference Horizontal Grid Guidelines */}
-          {gridLines.map((line, idx) => {
-            const y = padYTop + (1 - line.ratio) * chartH;
+          {/* Render All Vertical Bars */}
+          {bars.map((bar) => {
+            const isSelected = activeIndex === bar.idx;
+            const barOpacity =
+              hoverIndex !== null
+                ? isSelected
+                  ? 1.0
+                  : 0.35
+                : bar.idx === count - 1
+                ? 1.0
+                : 0.85;
+
             return (
-              <g key={idx} className="pointer-events-none opacity-40">
-                <line
-                  x1={padX}
-                  y1={y}
-                  x2={svgWidth - padX}
-                  y2={y}
-                  stroke={isDark ? "#475569" : "#cbd5e1"}
-                  strokeDasharray="4 4"
-                  strokeWidth="1"
+              <g
+                key={bar.idx}
+                className="transition-opacity duration-150"
+                onMouseEnter={() => setHoverIndex(bar.idx)}
+                onClick={() => setHoverIndex(bar.idx)}
+              >
+                {/* Visual Rounded Bar */}
+                <rect
+                  x={bar.x}
+                  y={bar.y}
+                  width={bar.width}
+                  height={bar.height}
+                  rx={Math.min(3, bar.width / 2)}
+                  ry={Math.min(3, bar.width / 2)}
+                  fill={bar.badge.color}
+                  opacity={barOpacity}
+                  className="transition-all duration-150"
+                />
+
+                {/* Subtle White Top Cap Highlight on Selected Bar */}
+                {isSelected && (
+                  <rect
+                    x={bar.x}
+                    y={bar.y}
+                    width={bar.width}
+                    height={Math.min(3, Math.max(2, bar.height * 0.1))}
+                    rx={Math.min(2, bar.width / 2)}
+                    fill="#ffffff"
+                    opacity="0.9"
+                  />
+                )}
+
+                {/* Full-Height Column Hit-Box for Smooth Touch / Mouse Scrubbing */}
+                <rect
+                  x={padX + bar.idx * colW}
+                  y={padYTop - 10}
+                  width={colW}
+                  height={chartH + 20}
+                  fill="transparent"
                 />
               </g>
             );
           })}
 
-          {/* Soft Gradient Area Fill */}
-          <path d={areaPath} fill="url(#aqiTrendFill)" />
-
-          {/* Smooth Continuous Spline Curve */}
-          <path
-            d={splinePath}
-            fill="none"
-            stroke="url(#aqiTrendStroke)"
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="filter drop-shadow-sm"
-          />
-
-          {/* Active Interactive Scanning Cursor (only displayed while interacting) */}
-          {isInteracting && activePoint && (
+          {/* Active Floating Tooltip (Shown directly above the selected bar) */}
+          {activeBar && (
             <g className="pointer-events-none transition-all duration-150">
-              {/* Vertical Laser Guideline */}
+              {/* Vertical subtle indicator line */}
               <line
-                x1={activePoint.x}
-                y1={padYTop - 8}
-                x2={activePoint.x}
-                y2={svgHeight - padYBottom}
-                stroke={isDark ? "#38bdf8" : "#0d9488"}
+                x1={activeBar.centerX}
+                y1={activeBar.y}
+                x2={activeBar.centerX}
+                y2={baselineY}
+                stroke={activeBadge.color}
                 strokeWidth="1.5"
-                strokeDasharray="3 3"
-                className="opacity-80"
+                strokeDasharray="2 2"
+                opacity="0.75"
               />
 
-              {/* Clean Static Focal Point Node */}
-              <circle
-                cx={activePoint.x}
-                cy={activePoint.y}
-                r="5"
+              {/* Floating Pill Background */}
+              <rect
+                x={tooltipX - pillW / 2}
+                y={tooltipY}
+                width={pillW}
+                height={pillH}
+                rx="6"
                 fill={activeBadge.color}
-                stroke={isDark ? "#0f172a" : "#ffffff"}
-                strokeWidth="2.5"
                 className="shadow-md"
               />
+
+              {/* Downward indicator tick */}
+              <polygon
+                points={`${tooltipX - 4},${tooltipY + pillH} ${tooltipX + 4},${
+                  tooltipY + pillH
+                } ${tooltipX},${tooltipY + pillH + 4}`}
+                fill={activeBadge.color}
+              />
+
+              {/* AQI Value inside Tooltip Pill */}
+              <text
+                x={tooltipX}
+                y={tooltipY + 14}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="800"
+                fill={activeBadge.textColor === "text-gray-900" ? "#111827" : "#ffffff"}
+              >
+                {activeBar.val}
+              </text>
             </g>
           )}
         </svg>
       </div>
 
-      {/* X-Axis Milestone Timeline Labels (Evenly Aligned with Actual Data) */}
+      {/* X-Axis Milestone Timeline Labels */}
       <div
         className={`flex justify-between text-[10px] sm:text-xs font-mono font-semibold mt-1 px-1.5 ${
           isDark ? "text-slate-400" : "text-slate-500"
@@ -313,6 +404,23 @@ export function TrendChart({ trendData, theme = "light" }) {
         <span className={isDark ? "text-teal-300 font-bold" : "text-teal-700 font-bold"}>
           Now
         </span>
+      </div>
+
+      {/* CPCB Air Quality Index Color Category Legend */}
+      <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500 flex items-center space-x-1">
+          <Info className="w-3 h-3" />
+          <span>Legend:</span>
+        </span>
+        {CPCB_BANDS.map((band) => (
+          <div key={band.category} className="flex items-center space-x-1">
+            <span
+              className="w-2.5 h-2.5 rounded-full inline-block shrink-0 shadow-xs"
+              style={{ backgroundColor: band.color }}
+            />
+            <span className="whitespace-nowrap">{band.category}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

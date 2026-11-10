@@ -104,7 +104,7 @@ Weather-Forecast-Application/
         │   ├── AQIHero.jsx      # Master AQI card, spectrum slider & micro-weather
         │   ├── PollutantGrid.jsx# Active pollutant cards with colored border accents
         │   ├── SensorWeather.jsx# On-site meteorological observations
-        │   ├── TrendChart.jsx   # 24-hour SVG trendline with hover tooltips
+        │   ├── TrendChart.jsx   # 24-hour interactive AQI bar histogram with CPCB color bands
         │   ├── NearbyStations.jsx# Nearby physical monitoring sensors list
         │   └── TopPollutedCities.jsx # Live polluted cities leaderboard
         └── weather/
