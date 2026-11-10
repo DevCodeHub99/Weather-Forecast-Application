@@ -7,7 +7,11 @@ import { WeatherView } from "./components/weather/WeatherView";
 import { AQIView } from "./components/aqi/AQIView";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useGeolocation } from "./hooks/useGeolocation";
-import { fetchWeatherByCity, fetchWeatherByCoords } from "./services/weatherService";
+import {
+  fetchWeatherByCity,
+  fetchWeatherByCoords,
+  mergePhysicalSensorWeather
+} from "./services/weatherService";
 import {
   fetchAQIBySlug,
   fetchAQIByCoords,
@@ -98,6 +102,9 @@ export function App() {
 
       if (aqiInfo) {
         setAqiData(aqiInfo);
+        if (aqiInfo.weather) {
+          setWeatherData((prev) => (prev ? mergePhysicalSensorWeather(prev, aqiInfo.weather) : prev));
+        }
         const resolvedSlug = aqiInfo.city_slug || aqiInfo.slug || slug;
 
         // Fetch 24-hour trend in parallel
@@ -139,7 +146,10 @@ export function App() {
         const stationCity = aqiClosest.city || aqiClosest.location || "Local Area";
 
         // 2. Fetch weather for those exact coordinates
-        const weather = await fetchWeatherByCoords(stationLat, stationLon);
+        let weather = await fetchWeatherByCoords(stationLat, stationLon, stationCity, aqiClosest.country || "");
+        if (aqiClosest.weather) {
+          weather = mergePhysicalSensorWeather(weather, aqiClosest.weather);
+        }
         setWeatherData(weather);
 
         const newLoc = {
@@ -227,6 +237,9 @@ export function App() {
       // If station object already has live iaqi telemetry, update immediately for fast UI feedback
       if (typeof stationOrSlug === "object" && stationOrSlug.iaqi) {
         setAqiData(stationOrSlug);
+        if (stationOrSlug.weather) {
+          setWeatherData((prev) => (prev ? mergePhysicalSensorWeather(prev, stationOrSlug.weather) : prev));
+        }
       }
 
       if (!targetSlug) return;
@@ -236,6 +249,9 @@ export function App() {
       try {
         const aqiInfo = await fetchAQIBySlug(targetSlug);
         setAqiData(aqiInfo);
+        if (aqiInfo.weather) {
+          setWeatherData((prev) => (prev ? mergePhysicalSensorWeather(prev, aqiInfo.weather) : prev));
+        }
         const trendSlug = aqiInfo.city_slug || aqiInfo.location_slug || targetSlug;
         if (trendSlug) {
           fetch24HourTrend(trendSlug).then(setTrendData).catch(() => {});
@@ -417,7 +433,12 @@ export function App() {
         {loading ? (
           <Loader message={loadingMessage} />
         ) : mode === "weather" ? (
-          <WeatherView weatherData={weatherData} theme={theme} />
+          <WeatherView
+            weatherData={weatherData}
+            theme={theme}
+            onLocationClick={handleGeolocationClick}
+            locationLoading={geoLoading}
+          />
         ) : (
           <AQIView
             aqiData={aqiData}
