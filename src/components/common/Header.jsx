@@ -21,36 +21,33 @@ export function Header({ theme = "light", onToggleTheme }) {
           </div>
         </div>
 
-        {/* Right: Modern Segmented Dual-Pill Theme Switcher */}
-        <div className="flex items-center bg-black/25 dark:bg-black/40 backdrop-blur-xl p-1 rounded-full border border-white/20 shadow-inner select-none">
-          <button
-            type="button"
-            onClick={() => isDark && onToggleTheme()}
-            aria-label="Switch to Light Theme"
-            className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 outline-none select-none cursor-pointer ${
-              !isDark
-                ? "bg-white text-teal-950 shadow-md font-black"
-                : "text-white/80 hover:text-white hover:bg-white/10"
-            }`}
-          >
-            <Sun className={`w-3.5 h-3.5 flex-shrink-0 ${!isDark ? "text-amber-500 fill-amber-500" : ""}`} />
-            <span className="select-none">Light</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => !isDark && onToggleTheme()}
-            aria-label="Switch to Dark Theme"
-            className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 outline-none select-none cursor-pointer ${
-              isDark
-                ? "bg-slate-900 text-white shadow-md font-black"
-                : "text-white/80 hover:text-white hover:bg-white/10"
-            }`}
-          >
-            <Moon className={`w-3.5 h-3.5 flex-shrink-0 ${isDark ? "text-cyan-300 fill-cyan-300" : ""}`} />
-            <span className="select-none">Dark</span>
-          </button>
-        </div>
+        {/* Right: Single Circular Theme Toggle with Fluid Spin & Scale Transition */}
+        <button
+          type="button"
+          onClick={onToggleTheme}
+          aria-label={isDark ? "Switch to Light Theme" : "Switch to Dark Theme"}
+          title={isDark ? "Switch to Light Theme" : "Switch to Dark Theme"}
+          className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer select-none outline-none active:scale-90 bg-black/20 hover:bg-black/35 dark:bg-black/40 dark:hover:bg-black/60 border border-white/25 hover:border-white/40 backdrop-blur-xl shadow-md hover:shadow-lg group"
+        >
+          <div className="relative w-5 h-5 flex items-center justify-center">
+            {/* Sun Icon (Visible in Light Mode, smoothly spins & scales out on switch) */}
+            <Sun
+              className={`w-5 h-5 absolute text-yellow-300 fill-yellow-300 transition-all duration-500 ease-in-out transform ${
+                isDark
+                  ? "rotate-90 scale-0 opacity-0"
+                  : "rotate-0 scale-100 opacity-100 group-hover:rotate-45"
+              }`}
+            />
+            {/* Moon Icon (Visible in Dark Mode, smoothly spins & scales in from -90deg) */}
+            <Moon
+              className={`w-5 h-5 absolute text-cyan-300 fill-cyan-300 transition-all duration-500 ease-in-out transform ${
+                isDark
+                  ? "rotate-0 scale-100 opacity-100 group-hover:-rotate-12"
+                  : "-rotate-90 scale-0 opacity-0"
+              }`}
+            />
+          </div>
+        </button>
       </div>
     </div>
   );
