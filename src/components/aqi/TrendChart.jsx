@@ -1,10 +1,17 @@
-import React, { useState } from "react";
-import { TrendingUp, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
+import React, { useState, useRef, useCallback } from "react";
+import {
+  TrendingUp,
+  ArrowDownRight,
+  ArrowUpRight,
+  Activity,
+  Clock
+} from "lucide-react";
 import { getCPCBBadge, formatAQITimestamp } from "../../constants/aqiStandards";
 
 export function TrendChart({ trendData, theme = "light" }) {
   const isDark = theme === "dark";
   const [hoverIndex, setHoverIndex] = useState(null);
+  const containerRef = useRef(null);
 
   if (!trendData || !trendData.averageArray || trendData.averageArray.length === 0) {
     return null;
@@ -14,109 +21,175 @@ export function TrendChart({ trendData, theme = "light" }) {
   const times = trendData.timeArray || [];
   const minVal = trendData.minValue ?? Math.min(...values);
   const maxVal = trendData.maxValue ?? Math.max(...values);
-  const avgVal = trendData.avgValue ?? Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+  const avgVal =
+    trendData.avgValue ?? Math.round(values.reduce((a, b) => a + b, 0) / values.length);
 
-  // SVG Chart Dimensions
-  const svgWidth = 600;
-  const svgHeight = 160;
-  const paddingX = 30;
-  const paddingY = 25;
+  // SVG Coordinate Canvas Geometry
+  const svgWidth = 800;
+  const svgHeight = 220;
+  const padX = 14;
+  const padYTop = 28;
+  const padYBottom = 36;
 
-  const chartW = svgWidth - paddingX * 2;
-  const chartH = svgHeight - paddingY * 2;
+  const chartW = svgWidth - padX * 2;
+  const chartH = svgHeight - padYTop - padYBottom;
   const valRange = Math.max(maxVal - minVal, 20);
 
-  // Calculate coordinates
+  // Compute point coordinates spanning full width
   const points = values.map((val, idx) => {
-    const x = paddingX + (idx / Math.max(values.length - 1, 1)) * chartW;
-    const y = svgHeight - paddingY - ((val - minVal) / valRange) * chartH;
-    const timeFormatted = times[idx] ? formatAQITimestamp(times[idx]).time : `${idx}:00`;
+    const x = Math.round(padX + (idx / Math.max(values.length - 1, 1)) * chartW);
+    const normalizedY = (val - minVal) / valRange;
+    const y = Math.round(svgHeight - padYBottom - normalizedY * chartH);
+    const timeFormatted = times[idx]
+      ? formatAQITimestamp(times[idx]).time
+      : `${idx}:00`;
     return { x, y, val, time: timeFormatted };
   });
 
-  const polylinePoints = points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const areaPath = `M ${points[0].x},${svgHeight - paddingY} ${points
-    .map((p) => `L ${p.x.toFixed(1)},${p.y.toFixed(1)}`)
-    .join(" ")} L ${points[points.length - 1].x},${svgHeight - paddingY} Z`;
+  // Generate smooth cubic bezier spline through all points
+  const splinePath = (() => {
+    if (points.length === 0) return "";
+    if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
 
-  const activePoint = hoverIndex !== null ? points[hoverIndex] : points[points.length - 1];
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i];
+      const p1 = points[i + 1];
+      const mx = (p0.x + p1.x) / 2;
+      d += ` C ${mx} ${p0.y}, ${mx} ${p1.y}, ${p1.x} ${p1.y}`;
+    }
+    return d;
+  })();
+
+  // Soft gradient area fill underneath the curve
+  const areaPath = (() => {
+    if (!splinePath) return "";
+    const first = points[0];
+    const last = points[points.length - 1];
+    return `${splinePath} L ${last.x} ${svgHeight - padYBottom} L ${first.x} ${svgHeight - padYBottom} Z`;
+  })();
+
+  // Active point: hovered index or last available point (current)
+  const isInteracting = hoverIndex !== null;
+  const activePoint = isInteracting ? points[hoverIndex] : points[points.length - 1];
   const activeBadge = getCPCBBadge(activePoint.val);
+
+  // Touch and mouse coordinate scrubber handler
+  const handlePointerScrub = useCallback(
+    (clientX) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const relativeX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+      const ratio = relativeX / rect.width;
+      const closestIdx = Math.round(ratio * (points.length - 1));
+      setHoverIndex(Math.max(0, Math.min(points.length - 1, closestIdx)));
+    },
+    [points.length]
+  );
+
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches.length > 0) {
+      handlePointerScrub(e.touches[0].clientX);
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    handlePointerScrub(e.clientX);
+  };
+
+  // Intermediate grid reference lines
+  const gridLines = [
+    { ratio: 1.0, label: `${maxVal}` },
+    { ratio: 0.5, label: `${Math.round(minVal + valRange * 0.5)}` },
+    { ratio: 0.0, label: `${minVal}` }
+  ];
 
   return (
     <div
-      className={`backdrop-blur-xl p-6 rounded-3xl max-w-4xl mx-auto mt-4 transition-all duration-300 border ${
+      className={`backdrop-blur-xl p-5 sm:p-6 rounded-3xl max-w-4xl mx-auto border transition-all duration-300 ${
         isDark
           ? "bg-slate-900/95 text-white border-slate-800 shadow-2xl"
           : "bg-white text-slate-800 border-slate-200/90 shadow-xl shadow-slate-200/50"
       }`}
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+      {/* Header bar: Title and Min/Avg/Max summary badges */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <div>
           <h3
-            className={`text-xl font-bold flex items-center space-x-2 ${
+            className={`text-base sm:text-lg font-black tracking-tight flex items-center space-x-2 ${
               isDark ? "text-white" : "text-slate-900"
             }`}
           >
-            <TrendingUp className={`w-5 h-5 ${isDark ? "text-teal-400" : "text-teal-600"}`} />
-            <span>24-Hour AQI Trend</span>
+            <TrendingUp className={`w-4 h-4 ${isDark ? "text-teal-400" : "text-teal-600"}`} />
+            <span>24-Hour Air Quality Trend</span>
           </h3>
           <p className={`text-xs mt-0.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-            Hourly fluctuation in air quality index over the past 24 hours
+            Diurnal pollution curve & hourly concentration fluctuations
           </p>
         </div>
 
-        {/* Min / Avg / Max Badges */}
-        <div className="flex items-center space-x-2 mt-2 sm:mt-0 text-xs">
-          <span
-            className={`flex items-center space-x-1 px-2.5 py-1 rounded-xl font-semibold border ${
+        {/* Compact Min / Avg / Max statistics chips */}
+        <div className="flex items-center space-x-1.5 sm:space-x-2 text-xs">
+          <div
+            className={`flex items-center space-x-1 px-2.5 py-1 rounded-xl font-bold border transition-colors ${
               isDark
-                ? "bg-slate-800 border-slate-700 text-slate-300"
-                : "bg-slate-100 border-slate-200 text-slate-700"
+                ? "bg-slate-800/80 border-slate-700/80 text-emerald-400"
+                : "bg-emerald-50 border-emerald-200 text-emerald-800"
             }`}
           >
-            <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600" />
+            <ArrowDownRight className="w-3.5 h-3.5" />
             <span>Min: {minVal}</span>
-          </span>
-          <span
-            className={`flex items-center space-x-1 px-2.5 py-1 rounded-xl font-semibold border ${
+          </div>
+
+          <div
+            className={`flex items-center space-x-1 px-2.5 py-1 rounded-xl font-bold border transition-colors ${
               isDark
                 ? "bg-teal-950/60 border-teal-800/80 text-teal-300"
                 : "bg-teal-50 border-teal-200 text-teal-800"
             }`}
           >
-            <Activity className="w-3.5 h-3.5 text-teal-600" />
+            <Activity className="w-3.5 h-3.5" />
             <span>Avg: {avgVal}</span>
-          </span>
-          <span
-            className={`flex items-center space-x-1 px-2.5 py-1 rounded-xl font-semibold border ${
+          </div>
+
+          <div
+            className={`flex items-center space-x-1 px-2.5 py-1 rounded-xl font-bold border transition-colors ${
               isDark
                 ? "bg-rose-950/60 border-rose-800/80 text-rose-300"
-                : "bg-rose-50 border-rose-200 text-rose-700"
+                : "bg-rose-50 border-rose-200 text-rose-800"
             }`}
           >
-            <ArrowUpRight className="w-3.5 h-3.5 text-rose-600" />
+            <ArrowUpRight className="w-3.5 h-3.5" />
             <span>Max: {maxVal}</span>
-          </span>
+          </div>
         </div>
       </div>
 
-      {/* Hover Info Tooltip Bar */}
+      {/* Interactive Telemetry Readout Strip */}
       <div
-        className={`flex items-center justify-between text-xs px-3 py-1.5 rounded-xl border mb-2 ${
-          isDark
-            ? "bg-slate-800/60 border-slate-700/60"
-            : "bg-slate-50 border-slate-200"
+        className={`flex items-center justify-between text-xs px-3.5 py-2 rounded-2xl border mb-3 transition-all ${
+          isInteracting
+            ? isDark
+              ? "bg-slate-800/90 border-teal-500/40 shadow-sm"
+              : "bg-teal-50/80 border-teal-200 shadow-xs"
+            : isDark
+            ? "bg-slate-800/50 border-slate-800"
+            : "bg-slate-50 border-slate-200/70"
         }`}
       >
-        <span className={isDark ? "text-slate-400" : "text-slate-600"}>
-          Timeline: <strong>{activePoint.time}</strong>
-        </span>
         <div className="flex items-center space-x-2">
-          <span className={`font-bold ${isDark ? "text-white" : "text-slate-900"}`}>
+          <Clock className={`w-3.5 h-3.5 ${isDark ? "text-slate-400" : "text-slate-500"}`} />
+          <span className={`font-semibold ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+            {isInteracting ? `Timeline: ${activePoint.time}` : "Latest Reading (24h Trend)"}
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <span className={`text-sm font-black ${isDark ? "text-white" : "text-slate-900"}`}>
             AQI: {activePoint.val}
           </span>
           <span
-            className="px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-xs"
+            className="px-2.5 py-0.5 rounded-full text-[10px] font-black text-white shadow-xs"
             style={{ backgroundColor: activeBadge.color }}
           >
             {activeBadge.category}
@@ -124,84 +197,123 @@ export function TrendChart({ trendData, theme = "light" }) {
         </div>
       </div>
 
-      {/* Interactive SVG Sparkline */}
-      <div className="relative w-full overflow-x-auto">
+      {/* Full-Bleed Touch & Mouse Responsive Canvas */}
+      <div
+        ref={containerRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setHoverIndex(null)}
+        onTouchStart={handleTouchMove}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={() => setHoverIndex(null)}
+        className="relative w-full cursor-crosshair select-none touch-none py-1"
+        style={{ touchAction: "none" }}
+      >
         <svg
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-          className="w-full h-40 overflow-visible select-none"
+          className="w-full h-44 sm:h-52 overflow-visible"
+          preserveAspectRatio="none"
         >
           <defs>
-            <linearGradient id="trendGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#0d9488" stopOpacity={isDark ? "0.4" : "0.25"} />
-              <stop offset="100%" stopColor="#0d9488" stopOpacity="0.0" />
+            {/* Smooth multi-stop gradient fill under the curve */}
+            <linearGradient id="aqiTrendFill" x1="0" y1="0" x2="0" y2="1">
+              <stop
+                offset="0%"
+                stopColor={activeBadge.color}
+                stopOpacity={isDark ? "0.45" : "0.32"}
+              />
+              <stop
+                offset="70%"
+                stopColor={activeBadge.color}
+                stopOpacity={isDark ? "0.12" : "0.08"}
+              />
+              <stop offset="100%" stopColor={activeBadge.color} stopOpacity="0" />
+            </linearGradient>
+
+            {/* Subtle curve stroke gradient */}
+            <linearGradient id="aqiTrendStroke" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#0d9488" />
+              <stop offset="40%" stopColor="#eab308" />
+              <stop offset="75%" stopColor="#f43f5e" />
+              <stop offset="100%" stopColor="#7e0023" />
             </linearGradient>
           </defs>
 
-          {/* Grid Guideline Lines */}
-          <line
-            x1={paddingX}
-            y1={paddingY}
-            x2={svgWidth - paddingX}
-            y2={paddingY}
-            stroke={isDark ? "#334155" : "#e2e8f0"}
-            strokeDasharray="3 3"
-          />
-          <line
-            x1={paddingX}
-            y1={svgHeight / 2}
-            x2={svgWidth - paddingX}
-            y2={svgHeight / 2}
-            stroke={isDark ? "#334155" : "#e2e8f0"}
-            strokeDasharray="3 3"
-          />
-          <line
-            x1={paddingX}
-            y1={svgHeight - paddingY}
-            x2={svgWidth - paddingX}
-            y2={svgHeight - paddingY}
-            stroke={isDark ? "#334155" : "#e2e8f0"}
-          />
+          {/* Background Reference Horizontal Grid Guidelines */}
+          {gridLines.map((line, idx) => {
+            const y = padYTop + (1 - line.ratio) * chartH;
+            return (
+              <g key={idx} className="pointer-events-none opacity-40">
+                <line
+                  x1={padX}
+                  y1={y}
+                  x2={svgWidth - padX}
+                  y2={y}
+                  stroke={isDark ? "#475569" : "#cbd5e1"}
+                  strokeDasharray="4 4"
+                  strokeWidth="1"
+                />
+              </g>
+            );
+          })}
 
-          {/* Gradient Area Fill */}
-          <path d={areaPath} fill="url(#trendGradient)" />
+          {/* Soft Gradient Area Fill */}
+          <path d={areaPath} fill="url(#aqiTrendFill)" />
 
-          {/* Sparkline Polyline */}
-          <polyline
-            points={polylinePoints}
+          {/* Smooth Continuous Spline Curve */}
+          <path
+            d={splinePath}
             fill="none"
-            stroke="#0d9488"
-            strokeWidth="2.5"
+            stroke="url(#aqiTrendStroke)"
+            strokeWidth="3.2"
             strokeLinecap="round"
             strokeLinejoin="round"
+            className="filter drop-shadow-sm"
           />
 
-          {/* Interactive Hover Data Points */}
-          {points.map((p, idx) => (
-            <g
-              key={idx}
-              onMouseEnter={() => setHoverIndex(idx)}
-              onMouseLeave={() => setHoverIndex(null)}
-              className="cursor-pointer group"
-            >
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={hoverIndex === idx ? 6 : 3.5}
-                className="transition-all duration-150"
-                fill={getCPCBBadge(p.val).color}
-                stroke={isDark ? "#0f172a" : "#ffffff"}
-                strokeWidth="2"
+          {/* Active Interactive Scanning Cursor */}
+          {activePoint && (
+            <g className="pointer-events-none transition-all duration-150">
+              {/* Vertical Laser Guideline */}
+              <line
+                x1={activePoint.x}
+                y1={padYTop - 8}
+                x2={activePoint.x}
+                y2={svgHeight - padYBottom}
+                stroke={isDark ? "#38bdf8" : "#0d9488"}
+                strokeWidth="1.5"
+                strokeDasharray="3 3"
+                className="opacity-80"
               />
-              {/* Invisible larger hit area for easier touch/hover */}
-              <circle cx={p.x} cy={p.y} r={14} fill="transparent" />
+
+              {/* Pulsing Outer Radar Ring */}
+              <circle
+                cx={activePoint.x}
+                cy={activePoint.y}
+                r="11"
+                fill="none"
+                stroke={activeBadge.color}
+                strokeWidth="2"
+                className="animate-ping opacity-60"
+              />
+
+              {/* Active Focal Point Node */}
+              <circle
+                cx={activePoint.x}
+                cy={activePoint.y}
+                r="5.5"
+                fill={activeBadge.color}
+                stroke={isDark ? "#0f172a" : "#ffffff"}
+                strokeWidth="2.5"
+                className="shadow-lg"
+              />
             </g>
-          ))}
+          )}
         </svg>
       </div>
 
-      {/* Timeline Labels */}
+      {/* X-Axis Milestone Timeline Labels (Evenly Aligned with Actual Data) */}
       <div
-        className={`flex justify-between text-[10px] font-mono mt-1 px-2 ${
+        className={`flex justify-between text-[10px] sm:text-xs font-mono font-semibold mt-1 px-1.5 ${
           isDark ? "text-slate-400" : "text-slate-500"
         }`}
       >
@@ -209,7 +321,9 @@ export function TrendChart({ trendData, theme = "light" }) {
         <span>18h Ago</span>
         <span>12h Ago</span>
         <span>6h Ago</span>
-        <span>Now</span>
+        <span className={isDark ? "text-teal-300 font-bold" : "text-teal-700 font-bold"}>
+          Now
+        </span>
       </div>
     </div>
   );
