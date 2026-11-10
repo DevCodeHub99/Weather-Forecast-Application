@@ -111,7 +111,7 @@ export function DailyForecast({ daily, currentTemp, theme = "light" }) {
                   {/* Current Temp Dot Indicator (Today only) */}
                   {currentDotPercent !== null && (
                     <div
-                      className="absolute top-0 bottom-0 w-2 h-2 -ml-1 rounded-full bg-white border border-slate-900 shadow-md ring-2 ring-teal-400 z-10 animate-pulse"
+                      className="absolute top-0 bottom-0 w-2 h-2 -ml-1 rounded-full bg-white border border-slate-900 shadow-md ring-2 ring-teal-400 z-10"
                       style={{ left: `${currentDotPercent}%` }}
                       title={`Current: ${currentTemp}°C`}
                     />

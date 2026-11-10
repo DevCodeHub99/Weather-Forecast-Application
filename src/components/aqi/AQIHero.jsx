@@ -107,7 +107,7 @@ export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "li
             {/* Top row with LIVE red badge matching aqi.in */}
             <div className="flex items-center space-x-2">
               <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
                 <span>LIVE</span>
               </span>
               <span className={`text-xs font-semibold ${isDark ? "text-slate-400" : "text-slate-500"}`}>
@@ -384,7 +384,7 @@ export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "li
                     className="w-5 h-5 rounded-full border-2 border-white shadow-xl flex items-center justify-center transition-transform hover:scale-125"
                     style={{ backgroundColor: displayBadge.color }}
                   >
-                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
                   </div>
                 </div>
               </div>

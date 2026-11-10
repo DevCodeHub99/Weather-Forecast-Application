@@ -270,8 +270,8 @@ export function TrendChart({ trendData, theme = "light" }) {
             className="filter drop-shadow-sm"
           />
 
-          {/* Active Interactive Scanning Cursor */}
-          {activePoint && (
+          {/* Active Interactive Scanning Cursor (only displayed while interacting) */}
+          {isInteracting && activePoint && (
             <g className="pointer-events-none transition-all duration-150">
               {/* Vertical Laser Guideline */}
               <line
@@ -285,26 +285,15 @@ export function TrendChart({ trendData, theme = "light" }) {
                 className="opacity-80"
               />
 
-              {/* Pulsing Outer Radar Ring */}
+              {/* Clean Static Focal Point Node */}
               <circle
                 cx={activePoint.x}
                 cy={activePoint.y}
-                r="11"
-                fill="none"
-                stroke={activeBadge.color}
-                strokeWidth="2"
-                className="animate-ping opacity-60"
-              />
-
-              {/* Active Focal Point Node */}
-              <circle
-                cx={activePoint.x}
-                cy={activePoint.y}
-                r="5.5"
+                r="5"
                 fill={activeBadge.color}
                 stroke={isDark ? "#0f172a" : "#ffffff"}
                 strokeWidth="2.5"
-                className="shadow-lg"
+                className="shadow-md"
               />
             </g>
           )}

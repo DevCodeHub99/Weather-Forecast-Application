@@ -307,27 +307,14 @@ export function HourlyForecast({ hourly, advisory, theme = "light" }) {
                       onClick={() => setSelectedIndex(idx)}
                       onMouseEnter={() => setSelectedIndex(idx)}
                     >
-                      {/* Active glowing ring on selected node */}
-                      {isSelected && (
-                        <circle
-                          cx={p.x}
-                          cy={p.y}
-                          r="9"
-                          fill="none"
-                          stroke={isDark ? "#38bdf8" : "#0d9488"}
-                          strokeWidth="2"
-                          className="animate-ping opacity-75"
-                        />
-                      )}
-
                       {/* Main Node Dot */}
                       <circle
                         cx={p.x}
                         cy={p.y}
-                        r={isSelected ? "5.5" : "3.5"}
+                        r={isSelected ? "4.5" : "3"}
                         fill={isSelected ? (isDark ? "#38bdf8" : "#0d9488") : "#f43f5e"}
                         stroke={isDark ? "#0f172a" : "#ffffff"}
-                        strokeWidth="2"
+                        strokeWidth="1.5"
                         className="transition-all duration-200"
                       />
                     </g>
