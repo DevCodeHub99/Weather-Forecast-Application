@@ -34,7 +34,7 @@ export function CurrentWeather({
   const uvVal = current.uv !== undefined ? Number(current.uv) : 3;
   const uvInfo = getUVCategory(uvVal);
 
-  const iconUrl = current.sensorConditionIcon || `https://openweathermap.org/img/wn/${current.icon || "02d"}@2x.png`;
+  const iconUrl = current.icon || "https://apiserver.aqi.in/uploads/weather-icons/1.svg";
 
   return (
     <div
@@ -119,7 +119,7 @@ export function CurrentWeather({
               alt={current.condition || "Weather"}
               className="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-md filter select-none"
               onError={(e) => {
-                e.target.src = "https://openweathermap.org/img/wn/02d@2x.png";
+                e.target.src = "https://apiserver.aqi.in/uploads/weather-icons/1.svg";
               }}
             />
             <div>

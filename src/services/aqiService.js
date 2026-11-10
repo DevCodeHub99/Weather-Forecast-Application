@@ -1,13 +1,15 @@
-import { AQI_API_BASE, DEFAULT_AQI_TOKEN, STORAGE_KEYS } from "../constants/api";
+import { AQI_API_BASE, DEFAULT_AQI_TOKEN, STORAGE_KEYS } from "../constants/api.js";
 
 /**
  * Manages Bearer Token with localStorage persistence & fallback
  */
 function getToken() {
   try {
-    const cached = localStorage.getItem(STORAGE_KEYS.AQI_TOKEN);
-    if (cached && cached.startsWith("ey")) {
-      return cached;
+    if (typeof window !== "undefined" && window.localStorage) {
+      const cached = window.localStorage.getItem(STORAGE_KEYS.AQI_TOKEN);
+      if (cached && cached.startsWith("ey")) {
+        return cached;
+      }
     }
   } catch (e) {
     console.warn("Could not access localStorage:", e);
@@ -17,7 +19,9 @@ function getToken() {
 
 function saveToken(token) {
   try {
-    localStorage.setItem(STORAGE_KEYS.AQI_TOKEN, token);
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem(STORAGE_KEYS.AQI_TOKEN, token);
+    }
   } catch (e) {
     console.warn("Could not save token:", e);
   }

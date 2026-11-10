@@ -60,11 +60,11 @@ export function HourlyForecast({ hourly, theme = "light" }) {
               </span>
 
               <img
-                src={`https://openweathermap.org/img/wn/${item.icon || "02d"}.png`}
+                src={item.icon || "https://apiserver.aqi.in/uploads/weather-icons/1.svg"}
                 alt={item.condition}
                 className="w-10 h-10 my-1 drop-shadow-sm select-none"
                 onError={(e) => {
-                  e.target.src = "https://openweathermap.org/img/wn/02d.png";
+                  e.target.src = "https://apiserver.aqi.in/uploads/weather-icons/1.svg";
                 }}
               />
 

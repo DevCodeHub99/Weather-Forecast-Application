@@ -31,7 +31,7 @@ export function Footer({ theme = "light" }) {
           isDark ? "text-slate-400" : "text-teal-200/90"
         }`}
       >
-        Live air quality telemetry referenced courtesy of{" "}
+        Live air quality and meteorological telemetry referenced courtesy of{" "}
         <a
           href="https://www.aqi.in"
           target="_blank"
@@ -39,15 +39,6 @@ export function Footer({ theme = "light" }) {
           className="underline font-semibold hover:text-white transition-colors"
         >
           AQI.in
-        </a>{" "}
-        &bull; Meteorological data via{" "}
-        <a
-          href="https://openweathermap.org"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline font-semibold hover:text-white transition-colors"
-        >
-          OpenWeather
         </a>
       </p>
     </footer>

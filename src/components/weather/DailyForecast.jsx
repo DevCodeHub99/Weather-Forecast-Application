@@ -71,11 +71,11 @@ export function DailyForecast({ daily, currentTemp, theme = "light" }) {
               {/* Icon & Pop */}
               <div className="flex items-center space-x-2 w-28 sm:w-36 flex-shrink-0">
                 <img
-                  src={`https://openweathermap.org/img/wn/${item.icon || "02d"}.png`}
+                  src={item.icon || "https://apiserver.aqi.in/uploads/weather-icons/1.svg"}
                   alt={item.condition}
                   className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm select-none"
                   onError={(e) => {
-                    e.target.src = "https://openweathermap.org/img/wn/02d.png";
+                    e.target.src = "https://apiserver.aqi.in/uploads/weather-icons/1.svg";
                   }}
                 />
                 <div className="truncate">

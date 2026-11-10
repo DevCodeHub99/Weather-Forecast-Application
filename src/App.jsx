@@ -7,11 +7,7 @@ import { WeatherView } from "./components/weather/WeatherView";
 import { AQIView } from "./components/aqi/AQIView";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useGeolocation } from "./hooks/useGeolocation";
-import {
-  fetchWeatherByCity,
-  fetchWeatherByCoords,
-  mergePhysicalSensorWeather
-} from "./services/weatherService";
+import { normalizeAQIWeatherData } from "./services/weatherService";
 import {
   fetchAQIBySlug,
   fetchAQIByCoords,
@@ -81,7 +77,7 @@ export function App() {
   );
 
   /**
-   * Load AQI data for a given location or coordinates
+   * Load AQI & Weather data for a given location or coordinates
    */
   const loadAQIData = useCallback(async (slug, lat, lon) => {
     try {
@@ -103,7 +99,7 @@ export function App() {
       if (aqiInfo) {
         setAqiData(aqiInfo);
         if (aqiInfo.weather) {
-          setWeatherData((prev) => (prev ? mergePhysicalSensorWeather(prev, aqiInfo.weather) : prev));
+          setWeatherData(normalizeAQIWeatherData(aqiInfo));
         }
         const resolvedSlug = aqiInfo.city_slug || aqiInfo.slug || slug;
 
@@ -137,24 +133,26 @@ export function App() {
       setLoadingMessage("Pinpointing closest physical monitoring sensor...");
 
       try {
-        // 1. High-precision nearest physical sensor lookup (type=1)
+        // 1. High-precision nearest physical sensor lookup (type=1) via aqi.in
         const aqiClosest = await fetchAQIByCoords(lat, lon);
         setAqiData(aqiClosest);
 
+        // 2. Derive complete meteorological weather model from aqi.in telemetry
+        if (aqiClosest.weather) {
+          setWeatherData(normalizeAQIWeatherData(aqiClosest));
+        }
+
         const stationLat = aqiClosest.latitude || lat;
         const stationLon = aqiClosest.longitude || lon;
-        const stationCity = aqiClosest.city || aqiClosest.location || "Local Area";
-
-        // 2. Fetch weather for those exact coordinates
-        let weather = await fetchWeatherByCoords(stationLat, stationLon, stationCity, aqiClosest.country || "");
-        if (aqiClosest.weather) {
-          weather = mergePhysicalSensorWeather(weather, aqiClosest.weather);
-        }
-        setWeatherData(weather);
+        const stationCity =
+          aqiClosest.station ||
+          aqiClosest.city ||
+          aqiClosest.location ||
+          "Local Area";
 
         const newLoc = {
           city: stationCity,
-          country: aqiClosest.country || weather.city.country,
+          country: aqiClosest.country || "India",
           lat: stationLat,
           lon: stationLon,
           slug: aqiClosest.location_slug || aqiClosest.slug
@@ -188,39 +186,69 @@ export function App() {
       setLoadingMessage(`Searching "${cityName}"...`);
 
       try {
-        // 1. Fetch weather forecast
-        const weather = await fetchWeatherByCity(cityName);
-        setWeatherData(weather);
-
-        const lat = weather.city.coord.lat;
-        const lon = weather.city.coord.lon;
-
-        setCurrentLocation({
-          city: weather.city.name,
-          country: weather.city.country,
-          lat,
-          lon,
-          slug: specificSlug
-        });
-        recordSearchHistory(weather.city.name);
-
-        // 2. Resolve AQI by specific slug, or search, or coordinates
+        // 1. Resolve slug using aqi.in search
         let slug = specificSlug;
         if (!slug) {
           const searchMatches = await searchAQILocations(cityName);
           if (searchMatches && searchMatches.length > 0) {
             slug = searchMatches[0].slug;
+          } else {
+            slug = `india/delhi/${encodeURIComponent(cityName.toLowerCase())}`;
           }
         }
 
-        await loadAQIData(slug, lat, lon);
+        // 2. Fetch complete telemetry (AQI + Weather) from aqi.in
+        let aqiInfo = null;
+        try {
+          aqiInfo = await fetchAQIBySlug(slug);
+        } catch {
+          const searchMatches = await searchAQILocations(cityName);
+          if (searchMatches && searchMatches.length > 0) {
+            slug = searchMatches[0].slug;
+            aqiInfo = await fetchAQIBySlug(slug);
+          } else {
+            throw new Error(`Location "${cityName}" not found.`);
+          }
+        }
+
+        setAqiData(aqiInfo);
+        if (aqiInfo.weather) {
+          setWeatherData(normalizeAQIWeatherData(aqiInfo));
+        }
+
+        const stationCity =
+          aqiInfo.station ||
+          aqiInfo.city ||
+          aqiInfo.location ||
+          cityName;
+        const lat = aqiInfo.latitude || aqiInfo.city_lat;
+        const lon = aqiInfo.longitude || aqiInfo.city_lon;
+
+        setCurrentLocation({
+          city: stationCity,
+          country: aqiInfo.country || "India",
+          lat,
+          lon,
+          slug
+        });
+        recordSearchHistory(stationCity);
+
+        // 3. Fetch trend & nearby stations in parallel
+        const trendSlug = aqiInfo.city_slug || aqiInfo.location_slug || slug;
+        if (trendSlug) {
+          fetch24HourTrend(trendSlug).then(setTrendData).catch(() => {});
+        }
+        if (lat && lon) {
+          fetchNearbyStations(lat, lon).then(setNearbyStations).catch(() => {});
+        }
+        fetchTopPollutedCities(6).then(setTopCities).catch(() => {});
       } catch (err) {
         setError(err.message || "Failed to fetch data for the requested city.");
       } finally {
         setLoading(false);
       }
     },
-    [loadAQIData, recordSearchHistory]
+    [recordSearchHistory]
   );
 
   /**
@@ -238,7 +266,7 @@ export function App() {
       if (typeof stationOrSlug === "object" && stationOrSlug.iaqi) {
         setAqiData(stationOrSlug);
         if (stationOrSlug.weather) {
-          setWeatherData((prev) => (prev ? mergePhysicalSensorWeather(prev, stationOrSlug.weather) : prev));
+          setWeatherData(normalizeAQIWeatherData(stationOrSlug));
         }
       }
 
@@ -250,7 +278,7 @@ export function App() {
         const aqiInfo = await fetchAQIBySlug(targetSlug);
         setAqiData(aqiInfo);
         if (aqiInfo.weather) {
-          setWeatherData((prev) => (prev ? mergePhysicalSensorWeather(prev, aqiInfo.weather) : prev));
+          setWeatherData(normalizeAQIWeatherData(aqiInfo));
         }
         const trendSlug = aqiInfo.city_slug || aqiInfo.location_slug || targetSlug;
         if (trendSlug) {
