@@ -54,13 +54,13 @@ export function DailyForecast({ daily, currentTemp, theme = "light" }) {
           return (
             <div
               key={idx}
-              className={`py-3 flex items-center justify-between text-xs sm:text-sm transition-colors rounded-xl px-2 sm:px-3 ${
-                isDark ? "hover:bg-slate-800/40" : "hover:bg-slate-50/80"
+              className={`py-3 flex items-center justify-between text-xs sm:text-sm transition-all duration-200 rounded-xl px-2 sm:px-3 cursor-pointer group/row ${
+                isDark ? "hover:bg-slate-800/60" : "hover:bg-slate-100/70"
               }`}
             >
               {/* Day Name */}
               <div className="w-16 sm:w-20 flex-shrink-0">
-                <span className={`font-bold block ${isToday ? (isDark ? "text-teal-300 font-black" : "text-teal-700 font-black") : isDark ? "text-white" : "text-slate-900"}`}>
+                <span className={`font-bold block transition-colors ${isToday ? (isDark ? "text-teal-300 font-black" : "text-teal-700 font-black") : isDark ? "text-white group-hover/row:text-teal-300" : "text-slate-900 group-hover/row:text-teal-700"}`}>
                   {isToday ? "Today" : item.dayName}
                 </span>
                 <span className={`text-[10px] block ${isDark ? "text-slate-500" : "text-slate-400"}`}>
@@ -73,7 +73,7 @@ export function DailyForecast({ daily, currentTemp, theme = "light" }) {
                 <img
                   src={item.icon || "https://apiserver.aqi.in/uploads/weather-icons/1.svg"}
                   alt={item.condition}
-                  className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm select-none"
+                  className="w-8 h-8 sm:w-9 sm:h-9 drop-shadow-sm select-none transition-transform duration-300 group-hover/row:scale-110"
                   onError={(e) => {
                     e.target.src = "https://apiserver.aqi.in/uploads/weather-icons/1.svg";
                   }}
@@ -99,10 +99,10 @@ export function DailyForecast({ daily, currentTemp, theme = "light" }) {
                 </span>
 
                 {/* Range Bar Track */}
-                <div className="relative flex-1 h-2 rounded-full bg-slate-200/80 dark:bg-slate-800/90 overflow-hidden">
+                <div className="relative flex-1 h-2 group-hover/row:h-2.5 rounded-full bg-slate-200/80 dark:bg-slate-800/90 overflow-hidden transition-all duration-300">
                   {/* Colored Gradient Fill Pill */}
                   <div
-                    className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-teal-400 via-amber-400 to-rose-500 shadow-xs"
+                    className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-teal-400 via-amber-400 to-rose-500 shadow-xs transition-all duration-500 group-hover/row:shadow-md"
                     style={{
                       left: `${leftPercent}%`,
                       width: `${widthPercent}%`
@@ -111,7 +111,7 @@ export function DailyForecast({ daily, currentTemp, theme = "light" }) {
                   {/* Current Temp Dot Indicator (Today only) */}
                   {currentDotPercent !== null && (
                     <div
-                      className="absolute top-0 bottom-0 w-2 h-2 -ml-1 rounded-full bg-white border border-slate-900 shadow-md ring-2 ring-teal-400 z-10"
+                      className="absolute top-0 bottom-0 w-2 h-2 -ml-1 rounded-full bg-white border border-slate-900 shadow-md ring-2 ring-teal-400 z-10 animate-pulse"
                       style={{ left: `${currentDotPercent}%` }}
                       title={`Current: ${currentTemp}°C`}
                     />

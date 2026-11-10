@@ -15,7 +15,7 @@ function generateHourlyFromTelemetry(currentTemp, humidity, cloud, precipMm, bas
   const swingFactor = Math.max(4, Math.min(12, 10 * (1 - (cloud || 0) / 200)));
   const peakHour = 14.5; // 2:30 PM
 
-  for (let i = 0; i < 24; i += 3) {
+  for (let i = 0; i < 24; i += 1) {
     const targetDate = new Date(now.getTime() + i * 3600 * 1000);
     const hour = targetDate.getHours();
     const isNow = i === 0;
@@ -35,13 +35,13 @@ function generateHourlyFromTelemetry(currentTemp, humidity, cloud, precipMm, bas
     const pop = Math.min(90, Math.round((precipMm > 0 ? 60 : 0) + (cloud || 0) * 0.4));
 
     const isNight = hour < 6 || hour >= 19;
-    const timeStr = isNow
-      ? "Now"
-      : targetDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    const rawTime = targetDate.toLocaleTimeString([], { hour: "numeric", hour12: true });
+    const timeStr = isNow ? "Now" : rawTime.toUpperCase().replace(":00", "");
 
     hourly.push({
       dt: Math.floor(targetDate.getTime() / 1000),
       timeStr,
+      hour,
       temp: isNow ? Math.round(currentTemp) : simulatedTemp,
       feels_like: isNow ? Math.round(currentTemp) : Math.round(simulatedTemp + (simulatedHumidity > 60 ? 1 : -1)),
       icon: iconUrl || DEFAULT_WEATHER_ICON,
@@ -54,6 +54,32 @@ function generateHourlyFromTelemetry(currentTemp, humidity, cloud, precipMm, bas
   }
 
   return hourly;
+}
+
+/**
+ * Generates meteorological narrative advisory based on telemetry and trend
+ */
+function getAtmosphericAdvisory(currentTemp, condition, uv, maxPop, cloud) {
+  const condLower = (condition || "").toLowerCase();
+  if (condLower.includes("rain") || maxPop > 45) {
+    return "Precipitation expected in the area; carrying an umbrella is recommended.";
+  }
+  if (condLower.includes("haze") || condLower.includes("smoke")) {
+    return "Atmospheric haze present with reduced clarity; conditions steady through the evening.";
+  }
+  if (uv >= 6) {
+    return "High midday UV intensity expected; sun protection and hydration recommended.";
+  }
+  if (currentTemp >= 33) {
+    return "Warm temperatures persisting; stay well-hydrated throughout outdoor activities.";
+  }
+  if (currentTemp <= 14) {
+    return "Chilly evening breeze expected; an extra warm layer is recommended.";
+  }
+  if (cloud < 20) {
+    return "Predominantly clear skies expected; optimal conditions for outdoor activities.";
+  }
+  return "Partly cloudy conditions expected with comfortable temperatures throughout.";
 }
 
 /**
@@ -131,6 +157,8 @@ export function normalizeAQIWeatherData(locationData) {
 
   const hourly = generateHourlyFromTelemetry(currentTemp, humidity, cloud, precipMm, conditionText, iconUrl);
   const daily = generateDailyFromTelemetry(currentTemp, humidity, pressure, cloud, precipMm, conditionText, iconUrl);
+  const maxPop = Math.max(...hourly.map((h) => h.pop || 0), 0);
+  const advisory = getAtmosphericAdvisory(currentTemp, conditionText, uv, maxPop, cloud);
 
   const cityName =
     locationData.station ||
@@ -174,8 +202,10 @@ export function normalizeAQIWeatherData(locationData) {
       icon: iconUrl,
       is_day: w.is_day ?? 1,
       last_updated: w.last_updated || new Date().toISOString(),
+      advisory,
       isPhysicalSensor: true
     },
+    advisory,
     hourly,
     daily
   };

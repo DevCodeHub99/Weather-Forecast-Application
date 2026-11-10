@@ -1,99 +1,406 @@
-import React from "react";
-import { Clock, Droplets, Wind } from "lucide-react";
+import React, { useRef, useState, useEffect } from "react";
+import {
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  CloudRain,
+  Droplets,
+  Wind,
+  Info
+} from "lucide-react";
 
-export function HourlyForecast({ hourly, theme = "light" }) {
+export function HourlyForecast({ hourly, advisory, theme = "light" }) {
   const isDark = theme === "dark";
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   if (!hourly || hourly.length === 0) return null;
 
+  // Geometry constants for the continuous SVG temperature curve
+  const colWidth = 74; // Width per hourly column in pixels
+  const svgHeight = 54; // Total height of the SVG curve row
+  const topPad = 12;
+  const bottomPad = 12;
+  const usableHeight = svgHeight - topPad - bottomPad;
+
+  // Calculate temperature range to scale vertical positions
+  let minTemp = Infinity;
+  let maxTemp = -Infinity;
+  hourly.forEach((item) => {
+    if (item.temp < minTemp) minTemp = item.temp;
+    if (item.temp > maxTemp) maxTemp = item.temp;
+  });
+  if (maxTemp <= minTemp) maxTemp = minTemp + 1;
+  const tempSpan = maxTemp - minTemp;
+
+  // Calculate coordinates for each hourly point
+  const points = hourly.map((item, idx) => {
+    const x = idx * colWidth + colWidth / 2;
+    // Higher temp = lower y (higher visually)
+    const normalizedY = (item.temp - minTemp) / tempSpan;
+    const y = Math.round(svgHeight - bottomPad - normalizedY * usableHeight);
+    return { x, y, temp: item.temp };
+  });
+
+  // Build smooth cubic bezier curve path through all points
+  const curvePath = (() => {
+    if (points.length === 0) return "";
+    if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i];
+      const p1 = points[i + 1];
+      const mx = (p0.x + p1.x) / 2;
+      path += ` C ${mx} ${p0.y}, ${mx} ${p1.y}, ${p1.x} ${p1.y}`;
+    }
+    return path;
+  })();
+
+  // Build soft gradient fill area underneath curve
+  const areaPath = (() => {
+    if (!curvePath) return "";
+    const first = points[0];
+    const last = points[points.length - 1];
+    return `${curvePath} L ${last.x} ${svgHeight} L ${first.x} ${svgHeight} Z`;
+  })();
+
+  const totalWidth = hourly.length * colWidth;
+
+  // Check scroll positions to show/hide scroll arrow buttons
+  const checkScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    setCanScrollLeft(scrollLeft > 10);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener("scroll", checkScroll, { passive: true });
+      window.addEventListener("resize", checkScroll);
+      return () => {
+        el.removeEventListener("scroll", checkScroll);
+        window.removeEventListener("resize", checkScroll);
+      };
+    }
+  }, [hourly]);
+
+  const handleScroll = (direction) => {
+    if (!scrollRef.current) return;
+    const scrollAmount = 300;
+    scrollRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth"
+    });
+  };
+
+  const activeItem = hourly[selectedIndex] || hourly[0];
+
   return (
     <section
-      className={`backdrop-blur-xl p-5 sm:p-6 rounded-3xl max-w-4xl mx-auto border transition-all duration-300 ${
+      className={`backdrop-blur-xl p-5 sm:p-6 rounded-3xl max-w-4xl mx-auto border transition-all duration-300 relative ${
         isDark
           ? "bg-slate-900/95 text-white border-slate-800 shadow-2xl"
           : "bg-white text-slate-800 border-slate-200/90 shadow-xl shadow-slate-200/50"
       }`}
     >
-      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+      {/* Header bar with interactive telemetry readout */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center space-x-2">
           <Clock className={`w-4 h-4 ${isDark ? "text-teal-400" : "text-teal-600"}`} />
-          <h3 className={`text-base sm:text-lg font-black ${isDark ? "text-white" : "text-slate-900"}`}>
-            24-Hour Hourly Timeline
+          <h3 className={`text-base sm:text-lg font-black tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+            Hourly Forecast (Next 24h)
           </h3>
         </div>
-        <span className={`text-[11px] font-medium ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-          Swipe horizontally &rarr;
-        </span>
+
+        {/* Selected Hour Details Readout */}
+        <div className="flex items-center space-x-2 text-xs">
+          <span
+            className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full font-bold transition-all duration-200 ${
+              isDark
+                ? "bg-slate-800/90 border border-slate-700 text-slate-300"
+                : "bg-teal-50 border border-teal-200 text-teal-900"
+            }`}
+          >
+            <span className="text-teal-500 font-extrabold">{activeItem.timeStr}:</span>
+            <span>{activeItem.temp}&deg;C</span>
+            <span className="text-slate-400">&bull;</span>
+            <span className="hidden sm:inline">Feels {activeItem.feels_like}&deg;C</span>
+            <span className="text-slate-400 hidden sm:inline">&bull;</span>
+            <span className="inline-flex items-center space-x-1 text-cyan-500">
+              <Droplets className="w-3 h-3" />
+              <span>{activeItem.humidity}%</span>
+            </span>
+            <span className="text-slate-400">&bull;</span>
+            <span className="inline-flex items-center space-x-1 text-teal-600">
+              <Wind className="w-3 h-3" />
+              <span>{activeItem.windSpeed} km/h</span>
+            </span>
+          </span>
+        </div>
       </div>
 
-      <div className="flex overflow-x-auto space-x-2.5 py-1.5 horizontal-scroll pb-2">
-        {hourly.map((item, idx) => {
-          const isNow = idx === 0;
-          const timeLabel = isNow ? "Now" : item.timeStr;
-          const pop = item.pop ?? 0;
+      {/* Main Timeline Scroll Track with Floating Navigation Buttons */}
+      <div className="relative group">
+        {/* Left Scroll Navigation Button */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => handleScroll("left")}
+            aria-label="Scroll left"
+            className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-10 rounded-r-xl flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer ${
+              isDark
+                ? "bg-slate-800/90 text-white border-y border-r border-slate-700 hover:bg-slate-700"
+                : "bg-white/95 text-slate-800 border-y border-r border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
 
-          return (
-            <div
-              key={idx}
-              className={`p-3 rounded-2xl flex flex-col items-center min-w-[96px] sm:min-w-[104px] flex-shrink-0 border transition-all hover:scale-[1.02] ${
-                isNow
-                  ? isDark
-                    ? "bg-teal-950/40 border-teal-500/50 text-white shadow-md ring-1 ring-teal-500/40"
-                    : "bg-teal-50/80 border-teal-300 text-teal-950 shadow-sm ring-1 ring-teal-400/50"
-                  : isDark
-                  ? "bg-slate-800/70 border-slate-700/80 text-white hover:bg-slate-800"
-                  : "bg-slate-50 border-slate-200/80 text-slate-900 hover:bg-slate-100/70"
-              }`}
-            >
-              <span
-                className={`text-xs font-bold ${
-                  isNow
-                    ? isDark
-                      ? "text-teal-300"
-                      : "text-teal-700"
-                    : isDark
-                    ? "text-slate-300"
-                    : "text-slate-700"
-                }`}
+        {/* Right Scroll Navigation Button */}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => handleScroll("right")}
+            aria-label="Scroll right"
+            className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-10 rounded-l-xl flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer ${
+              isDark
+                ? "bg-slate-800/90 text-white border-y border-l border-slate-700 hover:bg-slate-700"
+                : "bg-white/95 text-slate-800 border-y border-l border-slate-200 hover:bg-slate-100"
+            }`}
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Horizontal Scroll Track */}
+        <div
+          ref={scrollRef}
+          className="overflow-x-auto horizontal-scroll scroll-smooth select-none py-1"
+        >
+          <div style={{ width: `${totalWidth}px` }} className="relative">
+            {/* 1. Time Interval Header Row */}
+            <div className="flex h-7 items-center">
+              {hourly.map((item, idx) => {
+                const isSelected = selectedIndex === idx;
+                return (
+                  <div
+                    key={idx}
+                    style={{ width: `${colWidth}px` }}
+                    onClick={() => setSelectedIndex(idx)}
+                    onMouseEnter={() => setSelectedIndex(idx)}
+                    className="text-center cursor-pointer"
+                  >
+                    <span
+                      className={`text-xs font-bold transition-colors ${
+                        isSelected
+                          ? isDark
+                            ? "text-teal-300 font-black"
+                            : "text-teal-700 font-black"
+                          : isDark
+                          ? "text-slate-400"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      {item.timeStr}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 2. Weather Icon + Temperature Row */}
+            <div className="flex h-10 items-center">
+              {hourly.map((item, idx) => {
+                const isSelected = selectedIndex === idx;
+                return (
+                  <div
+                    key={idx}
+                    style={{ width: `${colWidth}px` }}
+                    onClick={() => setSelectedIndex(idx)}
+                    onMouseEnter={() => setSelectedIndex(idx)}
+                    className="flex items-center justify-center space-x-1 cursor-pointer transition-transform hover:scale-105"
+                  >
+                    <img
+                      src={item.icon || "https://apiserver.aqi.in/uploads/weather-icons/1.svg"}
+                      alt={item.condition}
+                      className="w-5 h-5 flex-shrink-0 drop-shadow-xs"
+                      onError={(e) => {
+                        e.target.src = "https://apiserver.aqi.in/uploads/weather-icons/1.svg";
+                      }}
+                    />
+                    <span
+                      className={`text-sm font-black tracking-tight ${
+                        isSelected
+                          ? isDark
+                            ? "text-white"
+                            : "text-slate-900"
+                          : isDark
+                          ? "text-slate-200"
+                          : "text-slate-700"
+                      }`}
+                    >
+                      {item.temp}&deg;
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 3. Continuous Temperature Trend Curve SVG Row */}
+            <div className="relative h-[54px] my-1">
+              <svg
+                width={totalWidth}
+                height={svgHeight}
+                className="overflow-visible"
               >
-                {timeLabel}
-              </span>
+                <defs>
+                  {/* Soft area gradient fill underneath the trendline */}
+                  <linearGradient id="hourlyTempGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                      offset="0%"
+                      stopColor={isDark ? "#f43f5e" : "#f97316"}
+                      stopOpacity={isDark ? "0.35" : "0.22"}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={isDark ? "#f43f5e" : "#f97316"}
+                      stopOpacity="0"
+                    />
+                  </linearGradient>
 
-              <img
-                src={item.icon || "https://apiserver.aqi.in/uploads/weather-icons/1.svg"}
-                alt={item.condition}
-                className="w-10 h-10 my-1 drop-shadow-sm select-none"
-                onError={(e) => {
-                  e.target.src = "https://apiserver.aqi.in/uploads/weather-icons/1.svg";
-                }}
-              />
+                  {/* Stroke gradient */}
+                  <linearGradient id="hourlyStrokeGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#f43f5e" />
+                    <stop offset="50%" stopColor="#fb923c" />
+                    <stop offset="100%" stopColor="#f43f5e" />
+                  </linearGradient>
+                </defs>
 
-              <span className={`text-base font-black ${isDark ? "text-white" : "text-slate-900"}`}>
-                {item.temp}&deg;
-              </span>
+                {/* Soft Gradient Area Fill */}
+                <path d={areaPath} fill="url(#hourlyTempGrad)" />
 
-              {/* Rain Probability / Condition */}
-              {pop > 0 ? (
-                <span className="flex items-center space-x-1 mt-1 text-[10px] font-bold text-sky-500 bg-sky-500/10 px-1.5 py-0.5 rounded-full">
-                  <Droplets className="w-2.5 h-2.5" />
-                  <span>{pop}%</span>
-                </span>
-              ) : (
-                <span className={`text-[10px] font-medium mt-1 truncate max-w-[80px] ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                  {item.condition}
-                </span>
-              )}
+                {/* Continuous Bezier Temperature Line */}
+                <path
+                  d={curvePath}
+                  fill="none"
+                  stroke="url(#hourlyStrokeGrad)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="filter drop-shadow-sm"
+                />
 
-              {/* Wind Speed */}
-              {item.windSpeed !== undefined && (
-                <span className={`text-[9px] font-medium mt-1 flex items-center space-x-0.5 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
-                  <Wind className="w-2.5 h-2.5" />
-                  <span>{item.windSpeed}k</span>
-                </span>
+                {/* Interactive Hourly Temperature Nodes */}
+                {points.map((p, idx) => {
+                  const isSelected = selectedIndex === idx;
+                  return (
+                    <g
+                      key={idx}
+                      className="cursor-pointer"
+                      onClick={() => setSelectedIndex(idx)}
+                      onMouseEnter={() => setSelectedIndex(idx)}
+                    >
+                      {/* Active glowing ring on selected node */}
+                      {isSelected && (
+                        <circle
+                          cx={p.x}
+                          cy={p.y}
+                          r="9"
+                          fill="none"
+                          stroke={isDark ? "#38bdf8" : "#0d9488"}
+                          strokeWidth="2"
+                          className="animate-ping opacity-75"
+                        />
+                      )}
+
+                      {/* Main Node Dot */}
+                      <circle
+                        cx={p.x}
+                        cy={p.y}
+                        r={isSelected ? "5.5" : "3.5"}
+                        fill={isSelected ? (isDark ? "#38bdf8" : "#0d9488") : "#f43f5e"}
+                        stroke={isDark ? "#0f172a" : "#ffffff"}
+                        strokeWidth="2"
+                        className="transition-all duration-200"
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {/* Active Column Vertical Guide Line */}
+              {selectedIndex !== null && points[selectedIndex] && (
+                <div
+                  className="absolute top-0 bottom-0 pointer-events-none border-l border-dashed border-teal-500/40 transition-all duration-150"
+                  style={{ left: `${points[selectedIndex].x}px` }}
+                />
               )}
             </div>
-          );
-        })}
+
+            {/* 4. Rain Probability Row (Cloud icon + pop %) */}
+            <div className="flex h-7 items-center">
+              {hourly.map((item, idx) => {
+                const isSelected = selectedIndex === idx;
+                const pop = item.pop ?? 0;
+                return (
+                  <div
+                    key={idx}
+                    style={{ width: `${colWidth}px` }}
+                    onClick={() => setSelectedIndex(idx)}
+                    onMouseEnter={() => setSelectedIndex(idx)}
+                    className="flex items-center justify-center space-x-1 cursor-pointer"
+                  >
+                    <CloudRain
+                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                        pop > 20
+                          ? "text-sky-500"
+                          : isDark
+                          ? "text-slate-500"
+                          : "text-slate-400"
+                      }`}
+                    />
+                    <span
+                      className={`text-[11px] font-semibold ${
+                        pop > 20
+                          ? "text-sky-500 font-bold"
+                          : isSelected
+                          ? isDark
+                            ? "text-slate-300"
+                            : "text-slate-600"
+                          : isDark
+                          ? "text-slate-500"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      {pop}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Bottom Narrative Weather Advisory */}
+      <div
+        className={`mt-4 pt-3 border-t text-xs flex items-center space-x-2 ${
+          isDark
+            ? "border-slate-800 text-slate-300"
+            : "border-slate-100 text-slate-600"
+        }`}
+      >
+        <Info className={`w-4 h-4 flex-shrink-0 ${isDark ? "text-teal-400" : "text-teal-600"}`} />
+        <p className="font-medium tracking-wide">
+          {advisory || "Conditions are expected to remain steady with clear visibility through the evening."}
+        </p>
       </div>
     </section>
   );

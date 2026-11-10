@@ -6,7 +6,6 @@ import {
   Gauge,
   Eye,
   Cloud,
-  Compass,
   ArrowUp
 } from "lucide-react";
 import {
@@ -52,10 +51,10 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
   // Cloud cover
   const cloud = current.cloud !== undefined ? current.cloud : (current.condition?.toLowerCase().includes("cloud") ? 65 : 20);
 
-  const cardBase = `p-4 rounded-2xl border transition-all duration-200 flex flex-col justify-between ${
+  const cardBase = `p-4 rounded-2xl border transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 hover:shadow-lg cursor-pointer group ${
     isDark
-      ? "bg-slate-800/80 border-slate-700/80 text-white shadow-sm"
-      : "bg-slate-50 border-slate-200/90 text-slate-900 shadow-xs"
+      ? "bg-slate-800/80 border-slate-700/80 text-white hover:border-teal-500/40"
+      : "bg-slate-50 border-slate-200/90 text-slate-900 hover:border-teal-400 hover:bg-white"
   }`;
 
   return (
@@ -64,10 +63,10 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
       <div className={cardBase}>
         <div className="flex items-center justify-between mb-2">
           <span className={`text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-            <SunMedium className="w-4 h-4 text-amber-500 flex-shrink-0" />
+            <SunMedium className="w-4 h-4 text-amber-500 flex-shrink-0 group-hover:rotate-45 transition-transform duration-500" />
             <span>UV Index</span>
           </span>
-          <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border ${uvInfo.bg} ${uvInfo.color}`}>
+          <span className={`text-[11px] font-black px-2 py-0.5 rounded-full border transition-transform group-hover:scale-105 ${uvInfo.bg} ${uvInfo.color}`}>
             {uvInfo.level}
           </span>
         </div>
@@ -80,6 +79,16 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
               / 11+
             </span>
           </div>
+          {/* Mini progress bar */}
+          <div className="w-full bg-slate-200 dark:bg-slate-700/80 h-1.5 rounded-full overflow-hidden mt-1.5">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${Math.min(100, (uvVal / 11) * 100)}%`,
+                backgroundColor: uvVal <= 2 ? "#10b981" : uvVal <= 5 ? "#f59e0b" : uvVal <= 8 ? "#f97316" : "#ef4444"
+              }}
+            />
+          </div>
           <p className={`text-[11px] mt-1.5 line-clamp-1 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             {uvInfo.advice}
           </p>
@@ -90,7 +99,7 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
       <div className={cardBase}>
         <div className="flex items-center justify-between mb-2">
           <span className={`text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-            <Wind className="w-4 h-4 text-teal-500 flex-shrink-0" />
+            <Wind className="w-4 h-4 text-teal-500 flex-shrink-0 group-hover:translate-x-1 transition-transform duration-300" />
             <span>Wind & Gusts</span>
           </span>
           <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isDark ? "bg-slate-700 text-teal-300" : "bg-teal-50 text-teal-800 border border-teal-200"}`}>
@@ -98,13 +107,16 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
           </span>
         </div>
         <div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2.5">
+            {/* Animated rotating compass needle */}
             <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center ${isDark ? "bg-slate-700 text-teal-400" : "bg-teal-100 text-teal-700"}`}
+              className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-700 ease-out group-hover:scale-110 shadow-xs ${
+                isDark ? "bg-slate-700 text-teal-300" : "bg-teal-100 text-teal-700"
+              }`}
               style={{ transform: `rotate(${windDeg}deg)` }}
-              title={`Heading ${windDeg}°`}
+              title={`Heading ${windDeg}° (${windDir})`}
             >
-              <ArrowUp className="w-3.5 h-3.5" />
+              <ArrowUp className="w-4 h-4 stroke-[2.5]" />
             </div>
             <span className={`text-2xl font-black ${isDark ? "text-white" : "text-slate-900"}`}>
               {windKph}
@@ -123,7 +135,7 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
       <div className={cardBase}>
         <div className="flex items-center justify-between mb-2">
           <span className={`text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-            <Droplets className="w-4 h-4 text-cyan-500 flex-shrink-0" />
+            <Droplets className="w-4 h-4 text-cyan-500 flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
             <span>Humidity</span>
           </span>
           {dewPoint !== null && (
@@ -138,6 +150,13 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
               {humidity}%
             </span>
           </div>
+          {/* Mini humidity bar */}
+          <div className="w-full bg-slate-200 dark:bg-slate-700/80 h-1.5 rounded-full overflow-hidden mt-1.5">
+            <div
+              className="h-full bg-gradient-to-r from-teal-400 to-cyan-500 rounded-full transition-all duration-700"
+              style={{ width: `${Math.min(100, humidity)}%` }}
+            />
+          </div>
           <p className={`text-[11px] mt-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             {dewComfort}
           </p>
@@ -148,7 +167,7 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
       <div className={cardBase}>
         <div className="flex items-center justify-between mb-2">
           <span className={`text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-            <Gauge className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+            <Gauge className="w-4 h-4 text-indigo-500 flex-shrink-0 group-hover:rotate-12 transition-transform duration-300" />
             <span>Pressure</span>
           </span>
         </div>
@@ -161,7 +180,7 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
               hPa
             </span>
           </div>
-          <p className={`text-[11px] mt-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+          <p className={`text-[11px] mt-2 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             {pressureStatus}
           </p>
         </div>
@@ -171,7 +190,7 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
       <div className={cardBase}>
         <div className="flex items-center justify-between mb-2">
           <span className={`text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-            <Eye className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+            <Eye className="w-4 h-4 text-emerald-500 flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
             <span>Visibility</span>
           </span>
         </div>
@@ -184,7 +203,7 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
               km
             </span>
           </div>
-          <p className={`text-[11px] mt-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+          <p className={`text-[11px] mt-2 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             {visStatus}
           </p>
         </div>
@@ -194,7 +213,7 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
       <div className={cardBase}>
         <div className="flex items-center justify-between mb-2">
           <span className={`text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-            <Cloud className="w-4 h-4 text-sky-500 flex-shrink-0" />
+            <Cloud className="w-4 h-4 text-sky-500 flex-shrink-0 group-hover:-translate-y-0.5 transition-transform duration-300" />
             <span>Cloud Cover</span>
           </span>
         </div>
@@ -203,6 +222,13 @@ export function WeatherMetricsGrid({ weatherData, theme = "light" }) {
             <span className={`text-2xl font-black ${isDark ? "text-white" : "text-slate-900"}`}>
               {cloud}%
             </span>
+          </div>
+          {/* Mini cloudiness bar */}
+          <div className="w-full bg-slate-200 dark:bg-slate-700/80 h-1.5 rounded-full overflow-hidden mt-1.5">
+            <div
+              className="h-full bg-gradient-to-r from-sky-400 to-indigo-500 rounded-full transition-all duration-700"
+              style={{ width: `${Math.min(100, cloud)}%` }}
+            />
           </div>
           <p className={`text-[11px] mt-1.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             {cloud > 70 ? "Overcast skies" : cloud > 30 ? "Partly cloudy" : "Predominantly clear"}

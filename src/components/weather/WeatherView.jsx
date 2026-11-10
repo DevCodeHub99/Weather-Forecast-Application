@@ -22,9 +22,10 @@ export function WeatherView({
         locationLoading={locationLoading}
       />
 
-      {/* 2. Compact 24-Hour Timeline Slider */}
+      {/* 2. Compact 24-Hour Timeline with Temperature Curve */}
       <HourlyForecast
         hourly={weatherData.hourly}
+        advisory={weatherData.advisory || weatherData.current?.advisory}
         theme={theme}
       />
 

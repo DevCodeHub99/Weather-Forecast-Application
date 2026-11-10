@@ -34,6 +34,7 @@ const EPA_SPECTRUM_BANDS = [
 export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "light" }) {
   const isDark = theme === "dark";
   const [standard, setStandard] = useState("cpcb"); // "cpcb" | "usepa"
+  const [hoverAQI, setHoverAQI] = useState(null);
 
   if (!aqiData) return null;
 
@@ -47,6 +48,10 @@ export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "li
   const activeBadge = standard === "cpcb" ? cpcbBadge : epaBadge;
   const activeAQI = standard === "cpcb" ? aqiIn : aqiUS;
 
+  const displayAQI = hoverAQI !== null ? hoverAQI : activeAQI;
+  const displayBadge = standard === "cpcb" ? getCPCBBadge(displayAQI) : getUSEPABadge(displayAQI);
+  const markerPercent = Math.min(Math.max((displayAQI / 500) * 100, 2), 98);
+
   const { time: updatedTime, relative: updatedRelative } = formatAQITimestamp(aqiData.updated_at);
 
   const weather = aqiData.weather || {};
@@ -55,8 +60,6 @@ export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "li
   const pm25Val = pm25Raw !== undefined && pm25Raw !== null ? Math.round(pm25Raw) : null;
   const pm10Val = pm10Raw !== undefined && pm10Raw !== null ? Math.round(pm10Raw) : null;
 
-  // Spectrum Range position (0 to 500 scale, clamped between 2% and 98%)
-  const markerPercent = Math.min(Math.max((activeAQI / 500) * 100, 2), 98);
   const spectrumBands = standard === "cpcb" ? CPCB_SPECTRUM_BANDS : EPA_SPECTRUM_BANDS;
 
   return (
@@ -342,14 +345,20 @@ export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "li
                 ))}
               </div>
 
-              {/* Multi-Stop Gradient Track & Animated Indicator */}
+              {/* Multi-Stop Gradient Track & Animated Indicator with Interactive Scrubber */}
               <div
-                className={`relative w-full h-3.5 rounded-full shadow-inner ${
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  setHoverAQI(Math.round(pct * 500));
+                }}
+                onMouseLeave={() => setHoverAQI(null)}
+                className={`relative w-full h-4 rounded-full shadow-inner cursor-crosshair group/track ${
                   isDark ? "bg-slate-800" : "bg-slate-200"
                 }`}
               >
                 <div
-                  className="w-full h-full rounded-full"
+                  className="w-full h-full rounded-full transition-opacity group-hover/track:opacity-95"
                   style={{
                     background:
                       "linear-gradient(to right, #009966 0%, #ffde33 16%, #ff9933 32%, #cc0033 50%, #660099 75%, #7e0023 100%)"
@@ -358,12 +367,22 @@ export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "li
 
                 {/* Animated Indicator Pin */}
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all duration-700 ease-out z-20 flex flex-col items-center pointer-events-none"
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all duration-300 ease-out z-20 flex flex-col items-center pointer-events-none"
                   style={{ left: `${markerPercent}%` }}
                 >
+                  {/* Floating scrubber tooltip when user hovers along the scale */}
+                  {hoverAQI !== null && (
+                    <div
+                      className="absolute -top-8 text-[11px] font-black px-2.5 py-0.5 rounded-full text-white shadow-xl whitespace-nowrap animate-in fade-in zoom-in-95 duration-150 border border-white/30"
+                      style={{ backgroundColor: displayBadge.color }}
+                    >
+                      {displayAQI} &bull; {displayBadge.category}
+                    </div>
+                  )}
+
                   <div
-                    className="w-5 h-5 rounded-full border-2 border-white shadow-xl flex items-center justify-center"
-                    style={{ backgroundColor: activeBadge.color }}
+                    className="w-5 h-5 rounded-full border-2 border-white shadow-xl flex items-center justify-center transition-transform hover:scale-125"
+                    style={{ backgroundColor: displayBadge.color }}
                   >
                     <div className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
                   </div>
