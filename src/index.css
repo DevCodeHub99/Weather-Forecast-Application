@@ -37,36 +37,18 @@ html.dark body {
   color: #f8fafc;
 }
 
-/* Custom scrollbars for horizontal forecast rows */
-.horizontal-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: #0d9488 #e2e8f0;
-}
-
+/* Hide scrollbars completely across all modern browsers while preserving scroll functionality */
+.no-scrollbar::-webkit-scrollbar,
 .horizontal-scroll::-webkit-scrollbar {
-  height: 6px;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-.horizontal-scroll::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 8px;
-}
-
-.horizontal-scroll::-webkit-scrollbar-thumb {
-  background-color: #0d9488;
-  border-radius: 8px;
-}
-
-.dark .horizontal-scroll {
-  scrollbar-color: #0f766e #1e293b;
-}
-
-.dark .horizontal-scroll::-webkit-scrollbar-track {
-  background: #1e293b;
-}
-
-.dark .horizontal-scroll::-webkit-scrollbar-thumb {
-  background-color: #0f766e;
+.no-scrollbar,
+.horizontal-scroll {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
 }
 
 /* Glassmorphism utility */

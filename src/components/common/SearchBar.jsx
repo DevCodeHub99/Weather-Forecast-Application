@@ -235,7 +235,7 @@ export function SearchBar({
       </div>
 
       {/* Quick Popular Cities */}
-      <div className="flex items-center space-x-1.5 mt-2.5 overflow-x-auto horizontal-scroll pb-1 text-xs">
+      <div className="flex items-center space-x-1.5 mt-2.5 overflow-x-auto no-scrollbar pb-1 text-xs">
         <span className="text-[11px] text-teal-200 dark:text-teal-300 uppercase font-bold tracking-wider mr-1 flex-shrink-0">
           Popular:
         </span>

@@ -179,10 +179,10 @@ export function HourlyForecast({ hourly, advisory, theme = "light" }) {
           </button>
         )}
 
-        {/* Horizontal Scroll Track */}
+        {/* Horizontal Scroll Track (Scrollbar hidden, scrollable via drag/swipe/buttons) */}
         <div
           ref={scrollRef}
-          className="overflow-x-auto horizontal-scroll scroll-smooth select-none py-1"
+          className="overflow-x-auto no-scrollbar scroll-smooth select-none py-1"
         >
           <div style={{ width: `${totalWidth}px` }} className="relative">
             {/* 1. Time Interval Header Row */}
