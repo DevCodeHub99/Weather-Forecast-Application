@@ -31,9 +31,10 @@ export function WeatherView({
         theme={theme}
       />
 
-      {/* 3. Astronomical Sun Timeline & Solar Cycle Graph */}
+      {/* 3. Astronomical Sun Timeline & Real-Time Solar Position */}
       <SunTimeline
         astronomy={weatherData.astronomy}
+        coord={weatherData.city?.coord}
         theme={theme}
       />
 
