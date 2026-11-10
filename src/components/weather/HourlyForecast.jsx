@@ -6,10 +6,12 @@ import {
   CloudRain,
   Droplets,
   Wind,
-  Info
+  Info,
+  Sunrise,
+  Sunset
 } from "lucide-react";
 
-export function HourlyForecast({ hourly, advisory, theme = "light" }) {
+export function HourlyForecast({ hourly, advisory, astronomy, theme = "light" }) {
   const isDark = theme === "dark";
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -17,6 +19,9 @@ export function HourlyForecast({ hourly, advisory, theme = "light" }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   if (!hourly || hourly.length === 0) return null;
+
+  const sunriseHour = astronomy?.rawSunrise ? astronomy.rawSunrise.getHours() : null;
+  const sunsetHour = astronomy?.rawSunset ? astronomy.rawSunset.getHours() : null;
 
   // Geometry constants for the continuous SVG temperature curve
   const colWidth = 74; // Width per hourly column in pixels
@@ -118,8 +123,24 @@ export function HourlyForecast({ hourly, advisory, theme = "light" }) {
           </h3>
         </div>
 
-        {/* Selected Hour Details Readout */}
-        <div className="flex items-center space-x-2 text-xs">
+        {/* Selected Hour Details Readout & Solar Milestones */}
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
+          {astronomy && (
+            <span
+              className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors ${
+                isDark
+                  ? "bg-slate-800/80 border-slate-700 text-amber-300"
+                  : "bg-amber-50/90 border-amber-200 text-amber-900"
+              }`}
+            >
+              <Sunrise className="w-3.5 h-3.5 text-amber-500" />
+              <span>{astronomy.sunrise}</span>
+              <span className="opacity-40">&bull;</span>
+              <Sunset className="w-3.5 h-3.5 text-orange-500" />
+              <span>{astronomy.sunset}</span>
+            </span>
+          )}
+
           <span
             className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full font-bold transition-all duration-200 ${
               isDark
@@ -185,24 +206,42 @@ export function HourlyForecast({ hourly, advisory, theme = "light" }) {
           className="overflow-x-auto no-scrollbar scroll-smooth select-none py-1"
         >
           <div style={{ width: `${totalWidth}px` }} className="relative">
-            {/* 1. Time Interval Header Row */}
-            <div className="flex h-7 items-center">
+            {/* 1. Time Interval Header Row with Solar Milestones */}
+            <div className="flex h-8 items-center pt-1">
               {hourly.map((item, idx) => {
                 const isSelected = selectedIndex === idx;
+                const isSunrise = sunriseHour !== null && item.hour === sunriseHour;
+                const isSunset = sunsetHour !== null && item.hour === sunsetHour;
+
                 return (
                   <div
                     key={idx}
                     style={{ width: `${colWidth}px` }}
                     onClick={() => setSelectedIndex(idx)}
                     onMouseEnter={() => setSelectedIndex(idx)}
-                    className="text-center cursor-pointer"
+                    className="text-center cursor-pointer relative"
                   >
+                    {(isSunrise || isSunset) && (
+                      <span
+                        className={`absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-black px-1.5 py-0.2 rounded-full whitespace-nowrap shadow-xs ${
+                          isSunrise
+                            ? "bg-amber-500 text-white"
+                            : "bg-orange-600 text-white"
+                        }`}
+                      >
+                        {isSunrise ? "🌅 Rise" : "🌇 Set"}
+                      </span>
+                    )}
                     <span
                       className={`text-xs font-bold transition-colors ${
                         isSelected
                           ? isDark
                             ? "text-teal-300 font-black"
                             : "text-teal-700 font-black"
+                          : isSunrise
+                          ? "text-amber-500 font-black"
+                          : isSunset
+                          ? "text-orange-500 font-black"
                           : isDark
                           ? "text-slate-400"
                           : "text-slate-500"

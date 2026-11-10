@@ -1,4 +1,5 @@
 import { fetchAQIBySlug, fetchAQIByCoords, searchAQILocations } from "./aqiService.js";
+import { calculateSolarCycle } from "../utils/solarCalculator.js";
 
 const DEFAULT_WEATHER_ICON = "https://apiserver.aqi.in/uploads/weather-icons/1.svg";
 
@@ -160,6 +161,10 @@ export function normalizeAQIWeatherData(locationData) {
   const maxPop = Math.max(...hourly.map((h) => h.pop || 0), 0);
   const advisory = getAtmosphericAdvisory(currentTemp, conditionText, uv, maxPop, cloud);
 
+  const lat = locationData.latitude || locationData.city_lat;
+  const lon = locationData.longitude || locationData.city_lon;
+  const astronomy = calculateSolarCycle(lat, lon);
+
   const cityName =
     locationData.station ||
     locationData.city ||
@@ -174,8 +179,8 @@ export function normalizeAQIWeatherData(locationData) {
       country: locationData.country || "IN",
       state: locationData.state || "",
       coord: {
-        lat: locationData.latitude || locationData.city_lat,
-        lon: locationData.longitude || locationData.city_lon
+        lat,
+        lon
       }
     },
     current: {
@@ -206,6 +211,7 @@ export function normalizeAQIWeatherData(locationData) {
       isPhysicalSensor: true
     },
     advisory,
+    astronomy,
     hourly,
     daily
   };

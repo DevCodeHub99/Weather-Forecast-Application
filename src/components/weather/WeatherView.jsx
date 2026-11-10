@@ -3,6 +3,7 @@ import { CurrentWeather } from "./CurrentWeather";
 import { HourlyForecast } from "./HourlyForecast";
 import { DailyForecast } from "./DailyForecast";
 import { WeatherMetricsGrid } from "./WeatherMetricsGrid";
+import { SunTimeline } from "./SunTimeline";
 
 export function WeatherView({
   weatherData,
@@ -22,14 +23,21 @@ export function WeatherView({
         locationLoading={locationLoading}
       />
 
-      {/* 2. Compact 24-Hour Timeline with Temperature Curve */}
+      {/* 2. Compact 24-Hour Timeline with Temperature Curve & Solar Milestones */}
       <HourlyForecast
         hourly={weatherData.hourly}
         advisory={weatherData.advisory || weatherData.current?.advisory}
+        astronomy={weatherData.astronomy}
         theme={theme}
       />
 
-      {/* 3. 5-Day Outlook with Temperature Range Bars */}
+      {/* 3. Astronomical Sun Timeline & Solar Cycle Graph */}
+      <SunTimeline
+        astronomy={weatherData.astronomy}
+        theme={theme}
+      />
+
+      {/* 4. 5-Day Outlook with Temperature Range Bars */}
       <DailyForecast
         daily={weatherData.daily}
         currentTemp={weatherData.current?.temp}

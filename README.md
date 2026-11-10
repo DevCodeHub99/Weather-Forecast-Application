@@ -108,10 +108,11 @@ Weather-Forecast-Application/
         │   ├── NearbyStations.jsx# Nearby physical monitoring sensors list
         │   └── TopPollutedCities.jsx # Live polluted cities leaderboard
         └── weather/
-            ├── WeatherView.jsx  # Weather mode container
-            ├── CurrentWeather.jsx # Temperature, feels-like & metrics card
-            ├── HourlyForecast.jsx # Horizontal 24-hour forecast strip
-            ├── DailyForecast.jsx  # 5-day daily forecast cards with range bars
+            ├── WeatherView.jsx        # Weather mode container
+            ├── CurrentWeather.jsx     # Temperature, feels-like & metrics card
+            ├── HourlyForecast.jsx     # Horizontal 24-hour forecast strip with solar milestones
+            ├── SunTimeline.jsx        # Interactive solar arc graph with real-time sun position
+            ├── DailyForecast.jsx      # 5-day daily forecast cards with range bars
             └── WeatherMetricsGrid.jsx # 6-card meteorological intelligence grid
 ```
 
