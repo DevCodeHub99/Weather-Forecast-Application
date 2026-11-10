@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 import { getCPCBBadge, getUSEPABadge, formatAQITimestamp } from "../../constants/aqiStandards";
 import {
-  Radio,
-  ExternalLink,
   Droplets,
   Wind,
   SunMedium,
   CloudSun,
-  Activity,
   ArrowUpRight,
   Crosshair,
   Loader2

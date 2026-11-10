@@ -28,9 +28,9 @@ function saveToken(token) {
 }
 
 /**
- * Standardized authenticated fetch for apiserver.aqi.in
+ * Standardized authenticated fetch for apiserver.aqi.in with timeout and self-healing token retry
  */
-async function aqiFetch(path, params = {}) {
+async function aqiFetch(path, params = {}, timeoutMs = 10000) {
   const token = getToken();
   const url = new URL(`${AQI_API_BASE}${path}`);
   Object.keys(params).forEach((key) => {
@@ -39,36 +39,48 @@ async function aqiFetch(path, params = {}) {
     }
   });
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   const headers = {
     Authorization: `Bearer ${token}`,
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     Accept: "application/json"
   };
 
-  const response = await fetch(url.toString(), { headers });
+  try {
+    const response = await fetch(url.toString(), {
+      headers,
+      signal: controller.signal
+    });
 
-  if (response.status === 401) {
-    // If token expired, fall back to default token and retry once
-    saveToken(DEFAULT_AQI_TOKEN);
-    const retryHeaders = {
-      ...headers,
-      Authorization: `Bearer ${DEFAULT_AQI_TOKEN}`
-    };
-    const retryRes = await fetch(url.toString(), { headers: retryHeaders });
-    if (!retryRes.ok) {
-      throw new Error(`AQI API Unauthorized (${retryRes.status})`);
+    if (response.status === 401) {
+      saveToken(DEFAULT_AQI_TOKEN);
+      const retryRes = await fetch(url.toString(), {
+        headers: { ...headers, Authorization: `Bearer ${DEFAULT_AQI_TOKEN}` },
+        signal: controller.signal
+      });
+      if (!retryRes.ok) {
+        throw new Error(`AQI API Unauthorized (${retryRes.status})`);
+      }
+      return retryRes.json();
     }
-    return retryRes.json();
-  }
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      return { status: "not_found", message: "Not found", data: {} };
+    if (!response.ok) {
+      if (response.status === 404) {
+        return { status: "not_found", message: "Not found", data: {} };
+      }
+      throw new Error(`Telemetry service error (${response.status})`);
     }
-    throw new Error(`AQI Service responded with status ${response.status}`);
-  }
 
-  return response.json();
+    return response.json();
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error("Telemetry request timed out. Please check your network connection.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /**

@@ -6,8 +6,7 @@ import {
   Moon,
   Clock,
   Compass,
-  ArrowRight,
-  Sparkles
+  ArrowRight
 } from "lucide-react";
 import { calculateSolarCycle } from "../../utils/solarCalculator";
 
