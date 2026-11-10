@@ -191,17 +191,17 @@ export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "li
             <button
               type="button"
               onClick={() => setStandard("cpcb")}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition-all text-xs cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition-all text-xs cursor-pointer select-none outline-none ${
                 standard === "cpcb"
-                  ? "bg-teal-700 text-white shadow-xs"
+                  ? "bg-teal-700 text-white shadow-xs font-black"
                   : isDark
                   ? "text-slate-400 hover:text-white hover:bg-slate-700/50"
                   : "text-slate-600 hover:text-slate-900 hover:bg-white"
               }`}
             >
-              <span>🇮🇳 IN CPCB</span>
+              <span className="select-none">🇮🇳 IN CPCB</span>
               <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold select-none ${
                   standard === "cpcb"
                     ? "bg-teal-900/60 text-white"
                     : isDark
@@ -216,17 +216,17 @@ export function AQIHero({ aqiData, onLocationClick, locationLoading, theme = "li
             <button
               type="button"
               onClick={() => setStandard("usepa")}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition-all text-xs cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition-all text-xs cursor-pointer select-none outline-none ${
                 standard === "usepa"
-                  ? "bg-teal-700 text-white shadow-xs"
+                  ? "bg-teal-700 text-white shadow-xs font-black"
                   : isDark
                   ? "text-slate-400 hover:text-white hover:bg-slate-700/50"
                   : "text-slate-600 hover:text-slate-900 hover:bg-white"
               }`}
             >
-              <span>🇺🇸 US EPA</span>
+              <span className="select-none">🇺🇸 US EPA</span>
               <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold select-none ${
                   standard === "usepa"
                     ? "bg-teal-900/60 text-white"
                     : isDark

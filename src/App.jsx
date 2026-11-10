@@ -368,74 +368,72 @@ export function App() {
         />
       </header>
 
-      {/* View Switcher Tabs - Styled exactly like aqi.in */}
-      <div className="max-w-4xl mx-auto mt-5 px-1 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-center space-x-1 -mb-px">
-          {/* AQI Tab */}
+      {/* Modern Segmented View Mode Capsule Switcher */}
+      <div className="max-w-md mx-auto my-5 px-2 select-none">
+        <div
+          className={`p-1 rounded-2xl sm:rounded-full border backdrop-blur-xl transition-all duration-300 flex items-center shadow-inner ${
+            theme === "dark"
+              ? "bg-slate-900/80 border-slate-800/80"
+              : "bg-slate-200/70 border-slate-300/60"
+          }`}
+        >
+          {/* AQI Mode Tab */}
           <button
             type="button"
             onClick={() => handleModeChange("aqi")}
-            className={`flex items-center space-x-2 px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-black rounded-t-2xl transition-all cursor-pointer border-t-2 border-l border-r ${
+            aria-pressed={mode === "aqi"}
+            className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-xl sm:rounded-full text-xs sm:text-sm font-black transition-all duration-200 cursor-pointer outline-none select-none ${
               mode === "aqi"
                 ? theme === "dark"
-                  ? "bg-slate-900/95 text-white border-t-sky-400 border-l-slate-800 border-r-slate-800 shadow-md"
-                  : "bg-white text-teal-900 border-t-teal-600 border-l-slate-200 border-r-slate-200 shadow-sm"
+                  ? "bg-slate-800 text-white shadow-md shadow-black/30 border border-slate-700/50"
+                  : "bg-white text-teal-950 shadow-md shadow-slate-300/60 border border-slate-200/80"
                 : theme === "dark"
-                ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40"
-                : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-white/60"
+                ? "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                : "text-slate-600 hover:text-slate-950 hover:bg-white/40"
             }`}
           >
             <Wind
-              className={`w-4 h-4 ${
+              className={`w-4 h-4 flex-shrink-0 transition-colors ${
                 mode === "aqi"
                   ? theme === "dark"
-                    ? "text-sky-400"
+                    ? "text-teal-400"
                     : "text-teal-600"
                   : "text-slate-400"
               }`}
             />
-            <span>AQI</span>
+            <span>Air Quality</span>
+            {mode === "aqi" && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse hidden sm:inline-block ml-0.5" />
+            )}
           </button>
 
-          {/* Weather Tab */}
+          {/* Weather Mode Tab */}
           <button
             type="button"
             onClick={() => handleModeChange("weather")}
-            className={`flex items-center space-x-2 px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-black rounded-t-2xl transition-all cursor-pointer border-t-2 border-l border-r ${
+            aria-pressed={mode === "weather"}
+            className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-xl sm:rounded-full text-xs sm:text-sm font-black transition-all duration-200 cursor-pointer outline-none select-none ${
               mode === "weather"
                 ? theme === "dark"
-                  ? "bg-slate-900/95 text-white border-t-sky-400 border-l-slate-800 border-r-slate-800 shadow-md"
-                  : "bg-white text-teal-900 border-t-teal-600 border-l-slate-200 border-r-slate-200 shadow-sm"
+                  ? "bg-slate-800 text-white shadow-md shadow-black/30 border border-slate-700/50"
+                  : "bg-white text-teal-950 shadow-md shadow-slate-300/60 border border-slate-200/80"
                 : theme === "dark"
-                ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-800/40"
-                : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-white/60"
+                ? "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                : "text-slate-600 hover:text-slate-950 hover:bg-white/40"
             }`}
           >
             <Sun
-              className={`w-4 h-4 ${
+              className={`w-4 h-4 flex-shrink-0 transition-colors ${
                 mode === "weather"
                   ? "text-amber-500 fill-amber-500"
                   : "text-slate-400"
               }`}
             />
             <span>Weather</span>
+            {mode === "weather" && (
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse hidden sm:inline-block ml-0.5" />
+            )}
           </button>
-        </div>
-
-        {/* Live Telemetry Pill Indicator */}
-        <div className="flex items-center space-x-2 pb-1 text-xs">
-          {mode === "aqi" && aqiData && (
-            <span
-              className={`hidden sm:inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
-                theme === "dark"
-                  ? "bg-slate-800/80 text-slate-300 border border-slate-700"
-                  : "bg-slate-100 text-slate-700 border border-slate-200"
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Real-time Telemetry</span>
-            </span>
-          )}
         </div>
       </div>
 

@@ -5,6 +5,25 @@
 body {
   min-height: 100vh;
   transition: background 0.4s ease, color 0.4s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global brand selection highlight: Eliminates harsh blue browser selection */
+::selection {
+  background-color: #0d9488;
+  color: #ffffff;
+}
+
+/* Suppress mobile tap grey/blue focus boxes */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure buttons and controls never accidentally get text-selected */
+button, input[type="button"], select {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Light Theme: Bright, luminous daytime atmosphere with visible background image & soft sky tint */

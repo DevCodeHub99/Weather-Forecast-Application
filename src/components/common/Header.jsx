@@ -21,34 +21,34 @@ export function Header({ theme = "light", onToggleTheme }) {
           </div>
         </div>
 
-        {/* Right: Redesigned Compact Dual-Pill Theme Switcher */}
-        <div className="flex items-center bg-black/25 backdrop-blur-md p-1 rounded-full border border-white/20 shadow-inner">
+        {/* Right: Modern Segmented Dual-Pill Theme Switcher */}
+        <div className="flex items-center bg-black/25 dark:bg-black/40 backdrop-blur-xl p-1 rounded-full border border-white/20 shadow-inner select-none">
           <button
             type="button"
             onClick={() => isDark && onToggleTheme()}
-            title="Switch to Light Mode"
-            className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+            aria-label="Switch to Light Theme"
+            className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 outline-none select-none cursor-pointer ${
               !isDark
-                ? "bg-white text-teal-900 shadow-md scale-100"
-                : "text-white/70 hover:text-white hover:bg-white/10"
+                ? "bg-white text-teal-950 shadow-md font-black"
+                : "text-white/80 hover:text-white hover:bg-white/10"
             }`}
           >
-            <Sun className={`w-3.5 h-3.5 ${!isDark ? "text-amber-500 fill-amber-500" : ""}`} />
-            <span>Light</span>
+            <Sun className={`w-3.5 h-3.5 flex-shrink-0 ${!isDark ? "text-amber-500 fill-amber-500" : ""}`} />
+            <span className="select-none">Light</span>
           </button>
 
           <button
             type="button"
             onClick={() => !isDark && onToggleTheme()}
-            title="Switch to Dark Mode"
-            className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+            aria-label="Switch to Dark Theme"
+            className={`flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 outline-none select-none cursor-pointer ${
               isDark
-                ? "bg-slate-900 text-white shadow-md scale-100"
-                : "text-white/70 hover:text-white hover:bg-white/10"
+                ? "bg-slate-900 text-white shadow-md font-black"
+                : "text-white/80 hover:text-white hover:bg-white/10"
             }`}
           >
-            <Moon className={`w-3.5 h-3.5 ${isDark ? "text-cyan-300 fill-cyan-300" : ""}`} />
-            <span>Dark</span>
+            <Moon className={`w-3.5 h-3.5 flex-shrink-0 ${isDark ? "text-cyan-300 fill-cyan-300" : ""}`} />
+            <span className="select-none">Dark</span>
           </button>
         </div>
       </div>

@@ -23,7 +23,7 @@ export function Footer({ theme = "light" }) {
           isDark ? "text-slate-300" : "text-teal-100"
         }`}
       >
-        Independent educational project dedicated to environmental awareness.
+        Real-time environmental intelligence platform dedicated to air quality & meteorological monitoring.
       </p>
 
       <p

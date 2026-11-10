@@ -244,7 +244,7 @@ export function SearchBar({
             key={city}
             type="button"
             onClick={() => onSearch(city)}
-            className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-colors flex-shrink-0 backdrop-blur-sm border ${
+            className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-colors flex-shrink-0 backdrop-blur-sm border select-none outline-none cursor-pointer ${
               isDark
                 ? "bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700/60"
                 : "bg-white/20 hover:bg-white/35 text-white border-white/25 shadow-sm"
